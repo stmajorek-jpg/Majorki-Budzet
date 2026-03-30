@@ -244,21 +244,21 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
   </div>
   <div class="pin-error" id="pin-error"></div>
   <div class="pin-pad">
-    <button class="pin-btn" ontouchstart="pinKey('1',event)" onclick="pinKey('1')">1</button>
-    <button class="pin-btn" ontouchstart="pinKey('2',event)" onclick="pinKey('2')">2</button>
-    <button class="pin-btn" ontouchstart="pinKey('3',event)" onclick="pinKey('3')">3</button>
-    <button class="pin-btn" ontouchstart="pinKey('4',event)" onclick="pinKey('4')">4</button>
-    <button class="pin-btn" ontouchstart="pinKey('5',event)" onclick="pinKey('5')">5</button>
-    <button class="pin-btn" ontouchstart="pinKey('6',event)" onclick="pinKey('6')">6</button>
-    <button class="pin-btn" ontouchstart="pinKey('7',event)" onclick="pinKey('7')">7</button>
-    <button class="pin-btn" ontouchstart="pinKey('8',event)" onclick="pinKey('8')">8</button>
-    <button class="pin-btn" ontouchstart="pinKey('9',event)" onclick="pinKey('9')">9</button>
+    <button class="pin-btn" onclick="pinKey('1')">1</button>
+    <button class="pin-btn" onclick="pinKey('2')">2</button>
+    <button class="pin-btn" onclick="pinKey('3')">3</button>
+    <button class="pin-btn" onclick="pinKey('4')">4</button>
+    <button class="pin-btn" onclick="pinKey('5')">5</button>
+    <button class="pin-btn" onclick="pinKey('6')">6</button>
+    <button class="pin-btn" onclick="pinKey('7')">7</button>
+    <button class="pin-btn" onclick="pinKey('8')">8</button>
+    <button class="pin-btn" onclick="pinKey('9')">9</button>
     <button class="pin-btn empty"></button>
-    <button class="pin-btn" ontouchstart="pinKey('0',event)" onclick="pinKey('0')">0</button>
-    <button class="pin-btn del" ontouchstart="pinDel(event)" onclick="pinDel()">⌫</button>
+    <button class="pin-btn" onclick="pinKey('0')">0</button>
+    <button class="pin-btn del" onclick="pinDel()">⌫</button>
   </div>
   <div class="pin-setup-msg" id="pin-setup-msg"></div>
-  <button ontouchstart="resetPin()" onclick="resetPin()" style="margin-top:30px;background:none;border:none;color:rgba(255,255,255,0.2);font-family:var(--font);font-size:18px;padding:20px;cursor:pointer;text-decoration:underline;">Zapomniano PINu? Resetuj</button>
+  <button onclick="resetPin()" style="margin-top:30px;background:none;border:none;color:rgba(255,255,255,0.2);font-family:var(--font);font-size:18px;padding:20px;cursor:pointer;text-decoration:underline;">Zapomniano PINu? Resetuj</button>
 </div>
 
 <!-- MAIN APP -->
@@ -521,7 +521,7 @@ function initPin(){
   }
 }
 
-function pinKey(k,e){if(e){e.preventDefault();}
+function pinKey(k){
   if(pinBuffer.length>=4)return;
   pinBuffer+=k;
   updatePinDots();
@@ -530,7 +530,7 @@ function pinKey(k,e){if(e){e.preventDefault();}
   }
 }
 
-function pinDel(e){if(e){e.preventDefault();}
+function pinDel(){
   pinBuffer=pinBuffer.slice(0,-1);
   updatePinDots();
   document.getElementById('pin-error').textContent='';
@@ -626,17 +626,6 @@ function startChangePin(){
 // ── INIT ──
 window.onload=()=>{
   initPin();
-  // Touch events dla PIN
-  document.querySelectorAll(".pin-btn").forEach(btn=>{
-    btn.addEventListener("touchend",function(e){
-      e.preventDefault();
-      const k=this.textContent.trim();
-      if(k==="⌫")pinDel();
-      else if(k&&!isNaN(k))pinKey(k);
-    });
-  });
-  const rb=document.querySelector("#pin-screen button:last-child");
-  if(rb)rb.addEventListener("touchend",function(e){e.preventDefault();resetPin();});
   const t=new Date();
   const today=t.toISOString().split('T')[0];
   document.getElementById('inc-date').value=today;
