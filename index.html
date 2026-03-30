@@ -754,7 +754,7 @@ async function doScan(){
 Zwróć JSON: {"sklep":"nazwa","data":"YYYY-MM-DD","godzina":"HH:MM","suma":99.99,"produkty":[{"nazwa":"nazwa","ilosc":1.0,"jednostka":"szt","cena_jednostkowa":9.99,"suma":9.99,"kategoria":"Nabiał"}]}
 Tylko JSON, nic więcej.`}
         ]}]})
-    });
+  
     if(!resp.ok){const e=await resp.json();throw new Error(e.error?.message||'Błąd API');}
     const d=await resp.json();
     let txt=d.content[0].text.trim();
@@ -854,7 +854,7 @@ function updateSummary(){
       +media.filter(x=>x.date.startsWith(m)&&(x.person??0)===pi).reduce((s,x)=>s+x.amount,0)
       +events.filter(x=>x.data.startsWith(m)&&(x.person??0)===pi).reduce((s,x)=>s+x.amount,0);
     document.getElementById('p'+pi+'-exp').textContent=fmt(pe);
-  });
+
 }
 
 function renderReceipts(){
@@ -987,11 +987,11 @@ function fmt(n){return parseFloat(n||0).toLocaleString('pl-PL',{minimumFractionD
 function toB64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
 function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'')+' on';setTimeout(()=>t.classList.remove('on'),2600);}
 
-// Service Worker registration
-if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('sw.js').catch(()=>{});
-  });
+
+
+
+
+
 }
 </script>
 </body>
