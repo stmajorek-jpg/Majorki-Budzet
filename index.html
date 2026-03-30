@@ -258,6 +258,7 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
     <button class="pin-btn del" ontouchstart="pinDel(event)" onclick="pinDel()">⌫</button>
   </div>
   <div class="pin-setup-msg" id="pin-setup-msg"></div>
+  <button onclick="resetPin()" style="margin-top:30px;background:none;border:none;color:rgba(255,255,255,0.2);font-family:var(--font);font-size:12px;cursor:pointer;text-decoration:underline;">Zapomniano PINu? Resetuj</button>
 </div>
 
 <!-- MAIN APP -->
@@ -492,6 +493,18 @@ let pinMode=''; // 'verify' | 'setup-new1' | 'setup-new2' | 'change-old' | 'chan
 let pinTemp='';
 
 function pinHash(p){let h=0;for(let i=0;i<p.length;i++){h=((h<<5)-h)+p.charCodeAt(i);h|=0;}return h.toString();}
+
+function resetPin(){
+  if(!confirm('Resetować PIN? Wszystkie dane zostaną zachowane.'))return;
+  DB.del('pin_hash');
+  pinBuffer='';pinTemp='';
+  pinMode='setup-new1';
+  document.getElementById('pin-sub').textContent='Ustaw nowy PIN';
+  document.getElementById('pin-step').textContent='Krok 1/2: Wpisz nowy PIN';
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('pin-setup-msg').textContent='PIN musi mieć 4 cyfry.';
+  updatePinDots();
+}
 
 function initPin(){
   const stored=DB.get('pin_hash',null);
