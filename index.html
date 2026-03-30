@@ -244,18 +244,18 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
   </div>
   <div class="pin-error" id="pin-error"></div>
   <div class="pin-pad">
-    <button class="pin-btn" onclick="pinKey('1')">1</button>
-    <button class="pin-btn" onclick="pinKey('2')">2</button>
-    <button class="pin-btn" onclick="pinKey('3')">3</button>
-    <button class="pin-btn" onclick="pinKey('4')">4</button>
-    <button class="pin-btn" onclick="pinKey('5')">5</button>
-    <button class="pin-btn" onclick="pinKey('6')">6</button>
-    <button class="pin-btn" onclick="pinKey('7')">7</button>
-    <button class="pin-btn" onclick="pinKey('8')">8</button>
-    <button class="pin-btn" onclick="pinKey('9')">9</button>
+    <button class="pin-btn" ontouchstart="pinKey('1',event)" onclick="pinKey('1')">1</button>
+    <button class="pin-btn" ontouchstart="pinKey('2',event)" onclick="pinKey('2')">2</button>
+    <button class="pin-btn" ontouchstart="pinKey('3',event)" onclick="pinKey('3')">3</button>
+    <button class="pin-btn" ontouchstart="pinKey('4',event)" onclick="pinKey('4')">4</button>
+    <button class="pin-btn" ontouchstart="pinKey('5',event)" onclick="pinKey('5')">5</button>
+    <button class="pin-btn" ontouchstart="pinKey('6',event)" onclick="pinKey('6')">6</button>
+    <button class="pin-btn" ontouchstart="pinKey('7',event)" onclick="pinKey('7')">7</button>
+    <button class="pin-btn" ontouchstart="pinKey('8',event)" onclick="pinKey('8')">8</button>
+    <button class="pin-btn" ontouchstart="pinKey('9',event)" onclick="pinKey('9')">9</button>
     <button class="pin-btn empty"></button>
-    <button class="pin-btn" onclick="pinKey('0')">0</button>
-    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+    <button class="pin-btn" ontouchstart="pinKey('0',event)" onclick="pinKey('0')">0</button>
+    <button class="pin-btn del" ontouchstart="pinDel(event)" onclick="pinDel()">⌫</button>
   </div>
   <div class="pin-setup-msg" id="pin-setup-msg"></div>
 </div>
@@ -508,7 +508,7 @@ function initPin(){
   }
 }
 
-function pinKey(k){
+function pinKey(k,e){if(e){e.preventDefault();}
   if(pinBuffer.length>=4)return;
   pinBuffer+=k;
   updatePinDots();
@@ -517,7 +517,7 @@ function pinKey(k){
   }
 }
 
-function pinDel(){
+function pinDel(e){if(e){e.preventDefault();}
   pinBuffer=pinBuffer.slice(0,-1);
   updatePinDots();
   document.getElementById('pin-error').textContent='';
