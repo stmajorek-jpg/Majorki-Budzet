@@ -258,7 +258,7 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
     <button class="pin-btn del" ontouchstart="pinDel(event)" onclick="pinDel()">⌫</button>
   </div>
   <div class="pin-setup-msg" id="pin-setup-msg"></div>
-  <button onclick="resetPin()" style="margin-top:30px;background:none;border:none;color:rgba(255,255,255,0.2);font-family:var(--font);font-size:12px;cursor:pointer;text-decoration:underline;">Zapomniano PINu? Resetuj</button>
+  <button ontouchstart="resetPin()" onclick="resetPin()" style="margin-top:30px;background:none;border:none;color:rgba(255,255,255,0.2);font-family:var(--font);font-size:18px;padding:20px;cursor:pointer;text-decoration:underline;">Zapomniano PINu? Resetuj</button>
 </div>
 
 <!-- MAIN APP -->
@@ -626,6 +626,17 @@ function startChangePin(){
 // ── INIT ──
 window.onload=()=>{
   initPin();
+  // Touch events dla PIN
+  document.querySelectorAll(".pin-btn").forEach(btn=>{
+    btn.addEventListener("touchend",function(e){
+      e.preventDefault();
+      const k=this.textContent.trim();
+      if(k==="⌫")pinDel();
+      else if(k&&!isNaN(k))pinKey(k);
+    });
+  });
+  const rb=document.querySelector("#pin-screen button:last-child");
+  if(rb)rb.addEventListener("touchend",function(e){e.preventDefault();resetPin();});
   const t=new Date();
   const today=t.toISOString().split('T')[0];
   document.getElementById('inc-date').value=today;
