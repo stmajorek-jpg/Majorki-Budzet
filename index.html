@@ -184,14 +184,43 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 .sh-title{font-family:var(--serif);font-size:20px;color:var(--gold);margin-bottom:3px;}
 .sh-meta{font-size:12px;color:var(--ink2);font-weight:500;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .di-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
-.di{background:var(--paper2);border-radius:10px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;}
-.di-l{flex:1;padding-right:8px;}
+.di{background:var(--paper2);border-radius:10px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.di-l{flex:1;min-width:0;}
 .di-name{font-weight:600;font-size:13px;}
-.di-sub{font-size:11px;color:var(--ink3);margin-top:2px;}
-.di-price{font-size:13px;font-weight:700;color:var(--gold);}
+.di-sub{font-size:11px;color:var(--ink3);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.di-price{font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap;}
+.di-cat-sel{font-size:11px;background:var(--paper);border:1.5px solid var(--line);border-radius:8px;padding:3px 6px;color:var(--ink);font-family:var(--font);font-weight:600;cursor:pointer;outline:none;max-width:130px;}
+.di-cat-sel:focus{border-color:var(--gold);}
 .sh-total{display:flex;justify-content:space-between;padding-top:11px;border-top:1px solid var(--line);font-weight:600;font-size:15px;}
 .sh-total-val{font-family:var(--serif);font-size:20px;color:var(--gold);}
 .btn-sh-close{width:100%;margin-top:14px;background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:12px;font-family:var(--font);font-size:14px;font-weight:600;color:var(--ink2);cursor:pointer;}
+.btn-sh-save{width:100%;margin-top:8px;background:var(--ink);color:var(--gold2);border:none;border-radius:12px;padding:12px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;}
+
+/* Notatka */
+.sh-note-lbl{font-size:10px;color:var(--ink2);text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:6px;margin-top:12px;}
+.sh-note-inp{width:100%;background:var(--paper2);border:1.5px solid var(--line);border-radius:10px;padding:10px 13px;color:var(--ink);font-family:var(--font);font-size:13px;outline:none;resize:none;min-height:60px;}
+.sh-note-inp:focus{border-color:var(--gold);}
+.card-note{font-size:11px;color:var(--ink2);margin-top:3px;font-style:italic;}
+
+/* Kategoria drill-down */
+.cat-row{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 14px;box-shadow:var(--sh);cursor:pointer;transition:all 0.15s;}
+.cat-row:hover{box-shadow:var(--sh2);border-color:var(--gold);}
+.cat-row-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.cat-row-name{font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px;}
+.cat-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.cat-row-val{font-family:var(--serif);font-size:14px;color:var(--gold);}
+.cat-row-val.zero{color:var(--ink3);}
+.bar{height:4px;background:var(--paper3);border-radius:3px;overflow:hidden;}
+.bar-f{height:100%;border-radius:3px;transition:width 0.5s;}
+
+/* Cat drill sheet */
+.cat-drill-item{background:var(--paper2);border-radius:10px;padding:9px 12px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.cat-drill-l{flex:1;min-width:0;}
+.cat-drill-name{font-weight:600;font-size:13px;}
+.cat-drill-meta{font-size:11px;color:var(--ink3);margin-top:2px;}
+.cat-drill-price{font-size:13px;font-weight:700;color:var(--gold);white-space:nowrap;}
+.cat-drill-total{display:flex;justify-content:space-between;padding-top:10px;border-top:1px solid var(--line);font-weight:600;font-size:14px;margin-top:4px;}
+.cat-drill-total-val{font-family:var(--serif);font-size:18px;color:var(--gold);}
 
 /* Settings */
 .overlay{position:fixed;inset:0;background:rgba(26,18,8,0.45);z-index:100;display:none;align-items:flex-end;justify-content:center;}
@@ -466,6 +495,11 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 <!-- Detail sheet -->
 <div class="sheet" id="det-sheet" onclick="closeSheetOut(event,'det-sheet')">
   <div class="sheet-pan" id="det-pan"></div>
+</div>
+
+<!-- Category drill-down sheet -->
+<div class="sheet" id="cat-sheet" onclick="closeSheetOut(event,'cat-sheet')">
+  <div class="sheet-pan" id="cat-pan"></div>
 </div>
 
 <!-- Settings -->
@@ -766,12 +800,29 @@ function selP(i){curP=i;document.getElementById('pb0').classList.toggle('on',i==
 
 function handleFile(e){
   const f=e.target.files[0];if(!f)return;
-  curFile=f;
-  document.getElementById('prev-img').src=URL.createObjectURL(f);
-  document.getElementById('prev-img').style.display='block';
-  document.getElementById('btn-scan').style.display='block';
-  document.getElementById('result-box').style.display='none';
-  document.getElementById('btn-dl').style.display='none';
+  // Kompresja zdjęcia przed skanowaniem (max 1600px, jakość 0.82)
+  const img=new Image();
+  const url=URL.createObjectURL(f);
+  img.onload=()=>{
+    URL.revokeObjectURL(url);
+    const MAX=1600;
+    let w=img.width,h=img.height;
+    if(w>MAX||h>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
+    const canvas=document.createElement('canvas');
+    canvas.width=w;canvas.height=h;
+    canvas.getContext('2d').drawImage(img,0,0,w,h);
+    canvas.toBlob(blob=>{
+      curFile=new File([blob],'paragon.jpg',{type:'image/jpeg'});
+      const sizeMB=(curFile.size/1024/1024).toFixed(2);
+      document.getElementById('prev-img').src=URL.createObjectURL(curFile);
+      document.getElementById('prev-img').style.display='block';
+      document.getElementById('btn-scan').style.display='block';
+      document.getElementById('result-box').style.display='none';
+      document.getElementById('btn-dl').style.display='none';
+      toast(`Zdjęcie gotowe (${sizeMB} MB)`,'ok');
+    },'image/jpeg',0.82);
+  };
+  img.src=url;
 }
 
 async function doScan(){
@@ -782,7 +833,7 @@ async function doScan(){
   document.getElementById('loading').style.display='block';
   document.getElementById('result-box').style.display='none';
   try{
-    const b64=await toB64(curFile);const mt=curFile.type||'image/jpeg';
+    const b64=await toB64(curFile);const mt='image/jpeg';
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -823,8 +874,7 @@ function saveImg(){
   if(!curFile)return;
   const url=URL.createObjectURL(curFile);
   const a=document.createElement('a');a.href=url;
-  const ext=(curFile.name||'jpg').split('.').pop();
-  a.download=`Paragon_${new Date().toISOString().slice(0,10)}_${Date.now()}.${ext}`;
+  a.download=`Paragon_${new Date().toISOString().slice(0,10)}_${Date.now()}.jpg`;
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   toast('Zdjęcie pobrane ✓','ok');
@@ -838,7 +888,15 @@ function saveReceipt(){
   ['result-box','prev-img'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('btn-scan').style.display='none';
   document.getElementById('btn-dl').style.display='none';
-  selP(0);buildMonthBar();renderAll();toast('Paragon zapisany ✓','ok');switchTab('receipts');
+  // Reset file input żeby można było skanować kolejny paragon
+  document.getElementById('file-input').value='';
+  selP(0);
+  buildMonthBar();
+  // Ustaw miesiąc na miesiąc zapisanego paragonu
+  curMonth=rec.data.slice(0,7);
+  renderAll();
+  toast('Paragon zapisany ✓','ok');
+  switchTab('receipts');
 }
 
 // Delete
@@ -910,6 +968,7 @@ function renderReceipts(){
       <button class="card-del" onclick="delR(${r.id},event)">🗑️</button>
       <div class="card-top"><div class="card-ttl">🧾 ${r.sklep}</div><div class="card-amt">${fmt(r.suma)}</div></div>
       <div class="card-meta">${r.data}${r.godzina?' · '+r.godzina:''} · ${(r.produkty||[]).length} poz.</div>
+      ${r.notatka?`<div class="card-note">📝 ${r.notatka}</div>`:''}
       <span class="ptag ${pc}">${pn}</span>
     </div>`;
   }).join('');
@@ -966,7 +1025,7 @@ function renderCats(){
   document.getElementById('cat-always').innerHTML=ALL_DISPLAY_CATS.map(name=>{
     const val=map[name]||0;const col=COL[name]||COL['Inne'];
     const pct=maxVal>0&&val>0?(val/maxVal*100).toFixed(1):0;
-    return`<div class="cat-row"><div class="cat-row-top">
+    return`<div class="cat-row" onclick="openCatDrill('${name.replace(/'/g,"\\'")}')"><div class="cat-row-top">
       <div class="cat-row-name"><div class="cat-dot" style="background:${col}"></div>${name}</div>
       <div class="cat-row-val${val===0?' zero':''}">${val>0?fmt(val):'—'}</div>
     </div><div class="bar"><div class="bar-f" style="width:${pct}%;background:${col}"></div></div></div>`;
@@ -992,20 +1051,105 @@ function renderIncome(){
 }
 
 function openDet(id){
-  const all=[...receipts.map(r=>({...r,_t:'r'})),...media.map(m=>({...m,data:m.date,sklep:m.type,suma:m.amount,_t:'m'})),...events.map(e=>({...e,sklep:e.desc,suma:e.amount,_t:'e'}))];
-  const r=all.find(x=>x.id===id);if(!r)return;
-  const pn=names[r.person??0];const pc=(r.person??0)===1?'p1':'p0';
-  let html=`<div class="sh-handle"></div><div class="sh-title">${r.sklep}</div><div class="sh-meta">${r.data}${r.godzina?' · '+r.godzina:''}<span class="ptag ${pc}">${pn}</span></div>`;
-  if(r.produkty&&r.produkty.length){
-    html+='<div class="di-list">'+(r.produkty||[]).map(p=>{
-      const c=COL[p.kategoria]||COL['Inne'];
-      return`<div class="di"><div class="di-l"><div class="di-name">${p.nazwa}</div><div class="di-sub"><span class="cpill" style="background:${c}22;color:${c}">${p.kategoria||'Inne'}</span> · ${p.ilosc} ${p.jednostka||'szt'} × ${fmt(p.cena_jednostkowa)}</div></div><div class="di-price">${fmt(p.suma||p.cena_jednostkowa)}</div></div>`;
-    }).join('')+'</div>';
+  const r=receipts.find(x=>x.id===id);
+  // Paragony — pełny edytowalny widok
+  if(r){
+    const pn=names[r.person??0];const pc=(r.person??0)===1?'p1':'p0';
+    const catOpts=CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
+    let html=`<div class="sh-handle"></div>
+      <div class="sh-title">🧾 ${r.sklep}</div>
+      <div class="sh-meta">${r.data}${r.godzina?' · '+r.godzina:''}<span class="ptag ${pc}">${pn}</span></div>`;
+    if(r.produkty&&r.produkty.length){
+      html+='<div class="di-list">'+r.produkty.map((p,i)=>{
+        const c=COL[p.kategoria]||COL['Inne'];
+        return`<div class="di">
+          <div class="di-l">
+            <div class="di-name">${p.nazwa}</div>
+            <div class="di-sub">
+              <select class="di-cat-sel" data-rid="${r.id}" data-idx="${i}" onchange="changeCat(this)">
+                ${CATS.map(cat=>`<option value="${cat}"${cat===p.kategoria?' selected':''}>${cat}</option>`).join('')}
+              </select>
+              · ${p.ilosc} ${p.jednostka||'szt'} × ${fmt(p.cena_jednostkowa)}
+            </div>
+          </div>
+          <div class="di-price">${fmt(p.suma||p.cena_jednostkowa)}</div>
+        </div>`;
+      }).join('')+'</div>';
+    }
+    html+=`<div class="sh-total"><span>Suma</span><span class="sh-total-val">${fmt(r.suma)}</span></div>
+      <div class="sh-note-lbl">📝 Notatka</div>
+      <textarea class="sh-note-inp" id="note-inp-${r.id}" placeholder="Dodaj notatkę do paragonu...">${r.notatka||''}</textarea>
+      <button class="btn-sh-save" onclick="saveDet(${r.id})">💾 Zapisz zmiany</button>
+      <button class="btn-sh-close" onclick="closeSheet('det-sheet')">Zamknij</button>`;
+    document.getElementById('det-pan').innerHTML=html;
+    document.getElementById('det-sheet').classList.add('on');
+    return;
   }
-  html+=`<div class="sh-total"><span>Suma</span><span class="sh-total-val">${fmt(r.suma)}</span></div><button class="btn-sh-close" onclick="closeSheet('det-sheet')">Zamknij</button>`;
+  // Rachunki / wyjścia — tylko podgląd
+  const all=[...media.map(m=>({...m,data:m.date,sklep:m.type,suma:m.amount,_t:'m'})),...events.map(e=>({...e,sklep:e.desc,suma:e.amount,_t:'e'}))];
+  const x=all.find(x=>x.id===id);if(!x)return;
+  const pn=names[x.person??0];const pc=(x.person??0)===1?'p1':'p0';
+  let html=`<div class="sh-handle"></div><div class="sh-title">${x.sklep}</div>
+    <div class="sh-meta">${x.data}<span class="ptag ${pc}">${pn}</span></div>
+    <div class="sh-total"><span>Kwota</span><span class="sh-total-val">${fmt(x.suma)}</span></div>
+    <button class="btn-sh-close" onclick="closeSheet('det-sheet')">Zamknij</button>`;
   document.getElementById('det-pan').innerHTML=html;
   document.getElementById('det-sheet').classList.add('on');
 }
+
+function changeCat(sel){
+  const rid=parseInt(sel.dataset.rid);
+  const idx=parseInt(sel.dataset.idx);
+  const r=receipts.find(x=>x.id===rid);
+  if(!r||!r.produkty[idx])return;
+  r.produkty[idx].kategoria=sel.value;
+  // odśwież kolor w select (opcjonalnie)
+}
+
+function saveDet(rid){
+  const r=receipts.find(x=>x.id===rid);if(!r)return;
+  // Zapisz notatke
+  const noteEl=document.getElementById('note-inp-'+rid);
+  if(noteEl)r.notatka=noteEl.value.trim();
+  // Kategorie już zapisane przez changeCat w pamięci — sync do DB
+  DB.set('receipts',receipts);
+  closeSheet('det-sheet');
+  renderAll();
+  toast('Zapisano ✓','ok');
+}
+
+function openCatDrill(catName){
+  const m=curMonth;
+  const col=COL[catName]||COL['Inne'];
+  // Zbierz wszystkie produkty z tej kategorii w tym miesiącu
+  const items=[];
+  receipts.filter(r=>r.data.startsWith(m)).forEach(r=>{
+    (r.produkty||[]).filter(p=>(p.kategoria||'Inne')===catName).forEach(p=>{
+      items.push({nazwa:p.nazwa,cena:parseFloat(p.suma||p.cena_jednostkowa||0),sklep:r.sklep,data:r.data,ilosc:p.ilosc,jednostka:p.jednostka||'szt'});
+    });
+  });
+  const total=items.reduce((s,i)=>s+i.cena,0);
+  let html=`<div class="sh-handle"></div>
+    <div class="sh-title"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col};margin-right:8px;vertical-align:middle"></span>${catName}</div>
+    <div class="sh-meta" style="margin-bottom:12px;">${fmtMonth(m)} · ${items.length} pozycj${items.length===1?'a':items.length<5?'e':'i'}</div>`;
+  if(!items.length){
+    html+=`<div class="empty"><span class="empty-ico">🛒</span>Brak produktów w tej kategorii.</div>`;
+  } else {
+    html+='<div class="di-list">'+items.sort((a,b)=>b.cena-a.cena).map(it=>`
+      <div class="cat-drill-item">
+        <div class="cat-drill-l">
+          <div class="cat-drill-name">${it.nazwa}</div>
+          <div class="cat-drill-meta">${it.sklep} · ${it.data} · ${it.ilosc} ${it.jednostka}</div>
+        </div>
+        <div class="cat-drill-price">${fmt(it.cena)}</div>
+      </div>`).join('')+'</div>';
+    html+=`<div class="cat-drill-total"><span>Łącznie</span><span class="cat-drill-total-val">${fmt(total)}</span></div>`;
+  }
+  html+=`<button class="btn-sh-close" style="margin-top:14px;" onclick="closeSheet('cat-sheet')">Zamknij</button>`;
+  document.getElementById('cat-pan').innerHTML=html;
+  document.getElementById('cat-sheet').classList.add('on');
+}
+
 function closeSheet(id){document.getElementById(id).classList.remove('on');}
 function closeSheetOut(e,id){if(e.target.id===id)closeSheet(id);}
 
