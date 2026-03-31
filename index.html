@@ -143,6 +143,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);max-width:480
 .ptag{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:8px;margin-top:4px;}
 .ptag.p0{background:#e8f0fb;color:#1a4ab8;}
 .ptag.p1{background:#fce8f8;color:#8a1a7a;}
+.ptag.p2{background:#e8f7ec;color:#1a7a3a;}
 .card-del{position:absolute;top:50%;right:12px;transform:translateY(-50%);background:none;border:none;color:var(--ink3);font-size:16px;cursor:pointer;padding:4px;opacity:0;transition:opacity 0.2s;}
 .card:hover .card-del{opacity:1;}
 .card-del:hover{color:var(--crimson)!important;opacity:1!important;}
@@ -218,7 +219,17 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 .sh-note-inp:focus{border-color:var(--gold);}
 .card-note{font-size:11px;color:var(--ink2);margin-top:3px;font-style:italic;}
 
-/* Kategoria drill-down */
+/* Income summary card */
+.inc-summary-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:16px;box-shadow:var(--sh2);}
+.inc-sum-title{font-family:var(--serif);font-size:15px;color:var(--ink);margin-bottom:12px;}
+.inc-sum-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
+.inc-sum-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;}
+.inc-sum-name{color:var(--ink2);font-weight:500;display:flex;align-items:center;}
+.inc-sum-val{font-family:var(--serif);font-size:13px;color:var(--gold);font-weight:600;}
+.inc-sum-total{display:flex;justify-content:space-between;align-items:center;padding-top:9px;border-top:1px solid var(--line);font-weight:600;font-size:14px;margin-bottom:6px;}
+.inc-sum-total-val{font-family:var(--serif);font-size:18px;color:var(--crimson);}
+.inc-sum-balance{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;padding-top:6px;border-top:1px solid var(--line);}
+
 .cat-row{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 14px;box-shadow:var(--sh);cursor:pointer;transition:all 0.15s;}
 .cat-row:hover{box-shadow:var(--sh2);border-color:var(--gold);}
 .cat-row-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
@@ -420,6 +431,7 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
     <div class="psel">
       <button class="pbtn on" id="pb0" onclick="selP(0)">👨 <span id="pn0">Stanisław</span></button>
       <button class="pbtn" id="pb1" onclick="selP(1)">👩 <span id="pn1">Agnieszka</span></button>
+      <button class="pbtn" id="pb2" onclick="selP(2)">🤝 Wspólne</button>
     </div>
     <button class="btn-dl" id="btn-dl" onclick="saveImg()">💾 Zapisz zdjęcie na telefon</button>
     <button class="btn-ok" onclick="saveReceipt()">✓ Zapisz paragon</button>
@@ -453,7 +465,7 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
       <div class="f2">
         <div class="frow"><div class="flbl">Data</div><input class="finp" type="date" id="med-date"></div>
         <div class="frow"><div class="flbl">Kto</div>
-          <select class="fsel" id="med-p"><option value="0" id="mop0">Stanisław</option><option value="1" id="mop1">Agnieszka</option></select>
+          <select class="fsel" id="med-p"><option value="0" id="mop0">Stanisław</option><option value="1" id="mop1">Agnieszka</option><option value="2" id="mop2">Wspólne</option></select>
         </div>
       </div>
       <button class="btn-add" onclick="addMedia()">+ Dodaj rachunek</button>
@@ -470,7 +482,7 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
       <div class="f2">
         <div class="frow"><div class="flbl">Data</div><input class="finp" type="date" id="evt-date"></div>
         <div class="frow"><div class="flbl">Kto</div>
-          <select class="fsel" id="evt-p"><option value="0" id="eop0">Stanisław</option><option value="1" id="eop1">Agnieszka</option></select>
+          <select class="fsel" id="evt-p"><option value="0" id="eop0">Stanisław</option><option value="1" id="eop1">Agnieszka</option><option value="2" id="eop2">Wspólne</option></select>
         </div>
       </div>
       <button class="btn-add" onclick="addEvent()">+ Dodaj wyjście</button>
@@ -505,6 +517,7 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
         <select class="fsel" id="inc-src">
           <option value="Wypłata">Wypłata</option>
           <option value="Premia">Premia</option>
+          <option value="Multisport">Multisport</option>
           <option value="800+">800+</option>
           <option value="Inne">Inne</option>
         </select>
@@ -581,17 +594,18 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 <script>
 const DB={get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d;}catch{return d;}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v)),del:(k)=>localStorage.removeItem(k)};
 
-const CATS=['Nabiał','Owoce/Warzywa','Mięso/Wędliny','Pieczywo','Chemia/Kosmetyki','Napoje','Alkohol','Słodycze','Mrożonki','Przyprawy','Dania gotowe','Ubrania','Elektronika','Wyposażenie wnętrza','Bonnie 🐾','Paliwo/Benzyna','Bilety/Transport','Inne'];
+const CATS=['Nabiał','Owoce/Warzywa','Mięso/Wędliny','Pieczywo','Chemia/Kosmetyki','Napoje','Alkohol','Słodycze','Mrożonki','Przyprawy','Dania gotowe','Ubrania','Elektronika','Wyposażenie wnętrza','Szkoła 🏫','Bonnie 🐾','Paliwo/Benzyna','Bilety/Transport','Kieszonkowe Kuba','Kieszonkowe Kornelka','Inne'];
 const MEDIA_CATS=['Prąd','Gaz','Woda','Śmieci','Internet','Telewizja','Telefon','Czynsz','Inne media'];
 const EVT_CAT='Wyjście/Impreza';
 const ALL_DISPLAY_CATS=[...CATS,...MEDIA_CATS,EVT_CAT];
-const COL={'Nabiał':'#e8935c','Owoce/Warzywa':'#3aaa5a','Mięso/Wędliny':'#d94848','Pieczywo':'#c48a38','Chemia/Kosmetyki':'#4888c8','Napoje':'#5898d8','Alkohol':'#8858b8','Słodycze':'#d868a8','Mrożonki':'#38b8c8','Przyprawy':'#a87838','Dania gotowe':'#c8884c','Ubrania':'#e05080','Elektronika':'#2878c8','Wyposażenie wnętrza':'#7858a8','Bonnie 🐾':'#e87828','Paliwo/Benzyna':'#c04020','Bilety/Transport':'#208080','Inne':'#98a8b8','Prąd':'#e8b828','Gaz':'#e87828','Woda':'#28a0d8','Śmieci':'#787878','Internet':'#3868b8','Telewizja':'#6040b8','Telefon':'#30a060','Czynsz':'#8848a8','Inne media':'#888078','Wyjście/Impreza':'#c84868'};
+const COL={'Nabiał':'#e8935c','Owoce/Warzywa':'#3aaa5a','Mięso/Wędliny':'#d94848','Pieczywo':'#c48a38','Chemia/Kosmetyki':'#4888c8','Napoje':'#5898d8','Alkohol':'#8858b8','Słodycze':'#d868a8','Mrożonki':'#38b8c8','Przyprawy':'#a87838','Dania gotowe':'#c8884c','Ubrania':'#e05080','Elektronika':'#2878c8','Wyposażenie wnętrza':'#7858a8','Szkoła 🏫':'#2ea8a0','Bonnie 🐾':'#e87828','Paliwo/Benzyna':'#c04020','Bilety/Transport':'#208080','Kieszonkowe Kuba':'#5a7bc8','Kieszonkowe Kornelka':'#d060a8','Inne':'#98a8b8','Prąd':'#e8b828','Gaz':'#e87828','Woda':'#28a0d8','Śmieci':'#787878','Internet':'#3868b8','Telewizja':'#6040b8','Telefon':'#30a060','Czynsz':'#8848a8','Inne media':'#888078','Wyjście/Impreza':'#c84868'};
 
 let receipts=DB.get('receipts',[]);
 let incomes=DB.get('incomes',[]);
 let media=DB.get('media',[]);
 let events=DB.get('events',[]);
 let names=DB.get('names',['Stanisław','Agnieszka']);
+const PERSON_LABELS=['p0','p1','p2'];
 let periodDay=DB.get('periodDay',1);
 let curP=0,pieChart=null,curFile=null,curSub='sc',curMonth='';
 
@@ -755,7 +769,9 @@ function fmtDate(d){return d.toLocaleDateString('pl-PL',{day:'numeric',month:'lo
 function inPeriod(dateStr,p){return dateStr>=p.start&&dateStr<=p.end;}
 function fmtMonth(m){const d=new Date(m+'-01');const s=d.toLocaleDateString('pl-PL',{month:'short',year:'2-digit'});return s.charAt(0).toUpperCase()+s.slice(1);}
 
-let mpickYear=new Date().getFullYear();
+const MIN_YEAR=2026;
+const MAX_YEAR=2030;
+let mpickYear=Math.max(MIN_YEAR,new Date().getFullYear());
 
 function buildMonthBar(){
   const now=new Date();
@@ -787,9 +803,10 @@ function openMonthPicker(){
 function closeMonthPicker(){
   document.getElementById('mpick-overlay').classList.remove('on');
 }
-
 function mpickYearShift(d){
-  mpickYear+=d;
+  const next=mpickYear+d;
+  if(next<MIN_YEAR||next>MAX_YEAR)return;
+  mpickYear=next;
   document.getElementById('mpick-year-disp').textContent=mpickYear;
   renderMpickGrid();
 }
@@ -801,11 +818,15 @@ function renderMpickGrid(){
   const monthNames=['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
   const dataMonths=window._dataMonths||new Set();
   document.getElementById('mpick-year-disp').textContent=mpickYear;
+  // disable nav arrows at limits
+  document.querySelectorAll('.mpick-year-nav')[0].style.opacity=mpickYear<=MIN_YEAR?'0.2':'1';
+  document.querySelectorAll('.mpick-year-nav')[1].style.opacity=mpickYear>=MAX_YEAR?'0.2':'1';
   document.getElementById('mpick-grid').innerHTML=monthNames.map((name,i)=>{
     const m=String(i+1).padStart(2,'0');
     const key=`${mpickYear}-${m}`;
     const isOn=key===curMonth;
-    const isFuture=mpickYear>nowY||(mpickYear===nowY&&(i+1)>nowM);
+    // future = beyond today OR year < 2026
+    const isFuture=mpickYear<MIN_YEAR||(mpickYear>nowY||(mpickYear===nowY&&(i+1)>nowM));
     const hasData=dataMonths.has(key);
     const cls='mpick-btn'+(isOn?' on':hasData?' has-data':isFuture?' future':'');
     const click=isFuture?'':`onclick="selectMonth('${key}');closeMonthPicker()"`;
@@ -874,7 +895,7 @@ function resetData(){
 }
 
 // Scan
-function selP(i){curP=i;document.getElementById('pb0').classList.toggle('on',i===0);document.getElementById('pb1').classList.toggle('on',i===1);}
+function selP(i){curP=i;[0,1,2].forEach(j=>{const el=document.getElementById('pb'+j);if(el)el.classList.toggle('on',j===i);});}
 
 function handleFile(e){
   const f=e.target.files[0];if(!f)return;
@@ -1041,12 +1062,14 @@ function updateSummary(){
   });
 }
 
+function pTag(p){const pi=p??0;const pn=pi===2?'Wspólne':names[pi]||names[0];const pc=['p0','p1','p2'][pi]||'p0';return{pn,pc};}
+
 function renderReceipts(){
   const m=curMonth;const el=document.getElementById('rec-list');
   const recs=receipts.filter(r=>r.data.startsWith(m)).sort((a,b)=>b.data.localeCompare(a.data));
   if(!recs.length){el.innerHTML='<div class="empty"><span class="empty-ico">🧾</span>Brak paragonów w tym miesiącu.</div>';return;}
   el.innerHTML=recs.map(r=>{
-    const pn=names[r.person??0];const pc=(r.person??0)===1?'p1':'p0';
+    const {pn,pc}=pTag(r.person);
     return`<div class="card" onclick="openDet(${r.id})">
       <button class="card-del" onclick="delR(${r.id},event)">🗑️</button>
       <div class="card-top"><div class="card-ttl">🧾 ${r.sklep}</div><div class="card-amt">${fmt(r.suma)}</div></div>
@@ -1062,7 +1085,7 @@ function renderMedia(){
   const items=media.filter(x=>x.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date));
   if(!items.length){el.innerHTML='<div class="empty"><span class="empty-ico">🏠</span>Brak rachunków w tym miesiącu.</div>';return;}
   el.innerHTML=items.map(x=>{
-    const pn=names[x.person??0];const pc=(x.person??0)===1?'p1':'p0';
+    const {pn,pc}=pTag(x.person);
     return`<div class="card" onclick="openDet(${x.id})">
       <button class="card-del" onclick="delM(${x.id},event)">🗑️</button>
       <div class="card-top"><div class="card-ttl">🏠 ${x.type}</div><div class="card-amt">${fmt(x.amount)}</div></div>
@@ -1076,7 +1099,7 @@ function renderEvents(){
   const items=events.filter(x=>x.data.startsWith(m)).sort((a,b)=>b.data.localeCompare(a.data));
   if(!items.length){el.innerHTML='<div class="empty"><span class="empty-ico">🎉</span>Brak wyjść w tym miesiącu.</div>';return;}
   el.innerHTML=items.map(x=>{
-    const pn=names[x.person??0];const pc=(x.person??0)===1?'p1':'p0';
+    const {pn,pc}=pTag(x.person);
     return`<div class="card" onclick="openDet(${x.id})">
       <button class="card-del" onclick="delEv(${x.id},event)">🗑️</button>
       <div class="card-top"><div class="card-ttl">🎉 ${x.desc}</div><div class="card-amt">${fmt(x.amount)}</div></div>
@@ -1124,20 +1147,44 @@ function renderIncome(){
   if(!periodIncomes.length){el.innerHTML='<div class="empty"><span class="empty-ico">💰</span>Brak zarobków w tym okresie.</div>';return;}
   const grouped={};
   periodIncomes.forEach(i=>{const gm=i.date.slice(0,7);if(!grouped[gm])grouped[gm]=[];grouped[gm].push(i);});
+
+  // Podsumowanie po kategoriach (wydatki w tym miesiącu)
+  const expMap={};
+  receipts.filter(r=>r.data.startsWith(m)).forEach(r=>(r.produkty||[]).forEach(p=>{
+    const c=p.kategoria||'Inne';expMap[c]=(expMap[c]||0)+parseFloat(p.suma||p.cena_jednostkowa||0);
+  }));
+  media.filter(x=>x.date.startsWith(m)).forEach(x=>{expMap[x.type]=(expMap[x.type]||0)+x.amount;});
+  events.filter(x=>x.data.startsWith(m)).forEach(x=>{expMap['Wyjście/Impreza']=(expMap['Wyjście/Impreza']||0)+x.amount;});
+  const totalExp=Object.values(expMap).reduce((s,v)=>s+v,0);
+  const totalInc=periodIncomes.reduce((s,i)=>s+i.amount,0);
+  const sortedExp=Object.entries(expMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+
+  const summaryHtml=sortedExp.length?`
+    <div class="inc-summary-card">
+      <div class="inc-sum-title">📊 Podliczenie wydatków — <span style="color:var(--gold)">${fmtMonth(m)}</span></div>
+      <div class="inc-sum-rows">
+        ${sortedExp.map(([k,v])=>`<div class="inc-sum-row"><span class="inc-sum-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COL[k]||COL['Inne']};margin-right:6px;vertical-align:middle"></span>${k}</span><span class="inc-sum-val">${fmt(v)}</span></div>`).join('')}
+      </div>
+      <div class="inc-sum-total"><span>Suma wydatków</span><span class="inc-sum-total-val">${fmt(totalExp)}</span></div>
+      <div class="inc-sum-balance" style="color:${totalInc-totalExp>=0?'var(--emerald)':'var(--crimson)'}">
+        <span>Saldo okresu</span><span>${totalInc-totalExp>=0?'+':''}${fmt(totalInc-totalExp)}</span>
+      </div>
+    </div>`:'' ;
+
   el.innerHTML=Object.entries(grouped).sort((a,b)=>b[0].localeCompare(a[0])).map(([month,items])=>{
     const ml=new Date(month+'-01').toLocaleDateString('pl-PL',{month:'long',year:'numeric'});
     const ms=items.reduce((s,i)=>s+i.amount,0);
     return`<div style="margin-bottom:16px"><div class="mg-lbl"><span>${ml.charAt(0).toUpperCase()+ml.slice(1)}</span><span class="mg-sum">${fmt(ms)}</span></div>
-      ${items.map(i=>{const pc=(i.person??0)===1?'p1':'p0';return`<div class="inc-row"><div><div class="inc-src">${i.source}</div><div class="inc-meta">${i.date} <span class="ptag ${pc}">${names[i.person??0]}</span></div></div><div class="inc-val">+${fmt(i.amount)}</div><button class="inc-del" onclick="delI(${i.id},event)">🗑️</button></div>`;}).join('')}
+      ${items.map(i=>{const {pn,pc}=pTag(i.person);return`<div class="inc-row"><div><div class="inc-src">${i.source}</div><div class="inc-meta">${i.date} <span class="ptag ${pc}">${pn}</span></div></div><div class="inc-val">+${fmt(i.amount)}</div><button class="inc-del" onclick="delI(${i.id},event)">🗑️</button></div>`;}).join('')}
     </div>`;
-  }).join('');
+  }).join('')+summaryHtml;
 }
 
 function openDet(id){
   const r=receipts.find(x=>x.id===id);
   // Paragony — pełny edytowalny widok
   if(r){
-    const pn=names[r.person??0];const pc=(r.person??0)===1?'p1':'p0';
+    const {pn,pc}=pTag(r.person);
     const catOpts=CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
     let html=`<div class="sh-handle"></div>
       <div class="sh-title">🧾 ${r.sklep}</div>
@@ -1171,7 +1218,7 @@ function openDet(id){
   // Rachunki / wyjścia — tylko podgląd
   const all=[...media.map(m=>({...m,data:m.date,sklep:m.type,suma:m.amount,_t:'m'})),...events.map(e=>({...e,sklep:e.desc,suma:e.amount,_t:'e'}))];
   const x=all.find(x=>x.id===id);if(!x)return;
-  const pn=names[x.person??0];const pc=(x.person??0)===1?'p1':'p0';
+  const {pn,pc}=pTag(x.person);
   let html=`<div class="sh-handle"></div><div class="sh-title">${x.sklep}</div>
     <div class="sh-meta">${x.data}<span class="ptag ${pc}">${pn}</span></div>
     <div class="sh-total"><span>Kwota</span><span class="sh-total-val">${fmt(x.suma)}</span></div>
@@ -1236,18 +1283,20 @@ function openCatDrill(catName){
 function closeSheet(id){document.getElementById(id).classList.remove('on');}
 function closeSheetOut(e,id){if(e.target.id===id)closeSheet(id);}
 
+function getPName(p){const pi=p??0;return pi===2?'Wspólne':(names[pi]||names[0]);}
+
 function exportXlsx(){
   if(!window.XLSX){toast('Ładowanie...','');return;}
   const wb=XLSX.utils.book_new();
-  const rR=[['Data','Godzina','Sklep','Suma','Osoba']];receipts.forEach(r=>rR.push([r.data,r.godzina||'',r.sklep,r.suma,names[r.person??0]]));
+  const rR=[['Data','Godzina','Sklep','Suma','Osoba']];receipts.forEach(r=>rR.push([r.data,r.godzina||'',r.sklep,r.suma,getPName(r.person)]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rR),'Paragony');
-  const pR=[['Data','Sklep','Produkt','Kategoria','Ilość','Jedn.','Cena jedn.','Suma','Osoba']];receipts.forEach(r=>(r.produkty||[]).forEach(p=>pR.push([r.data,r.sklep,p.nazwa,p.kategoria||'Inne',p.ilosc,p.jednostka||'szt',p.cena_jednostkowa,p.suma,names[r.person??0]])));
+  const pR=[['Data','Sklep','Produkt','Kategoria','Ilość','Jedn.','Cena jedn.','Suma','Osoba']];receipts.forEach(r=>(r.produkty||[]).forEach(p=>pR.push([r.data,r.sklep,p.nazwa,p.kategoria||'Inne',p.ilosc,p.jednostka||'szt',p.cena_jednostkowa,p.suma,getPName(r.person)])));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pR),'Produkty');
-  const mR=[['Data','Rodzaj','Kwota','Osoba']];media.forEach(m=>mR.push([m.date,m.type,m.amount,names[m.person??0]]));
+  const mR=[['Data','Rodzaj','Kwota','Osoba']];media.forEach(m=>mR.push([m.date,m.type,m.amount,getPName(m.person)]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(mR),'Rachunki');
-  const eR=[['Data','Opis','Kwota','Osoba']];events.forEach(e=>eR.push([e.data,e.desc,e.amount,names[e.person??0]]));
+  const eR=[['Data','Opis','Kwota','Osoba']];events.forEach(e=>eR.push([e.data,e.desc,e.amount,getPName(e.person)]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(eR),'Wyjścia');
-  const iR=[['Data','Źródło','Kwota','Osoba']];incomes.forEach(i=>iR.push([i.date,i.source,i.amount,names[i.person??0]]));
+  const iR=[['Data','Źródło','Kwota','Osoba']];incomes.forEach(i=>iR.push([i.date,i.source,i.amount,getPName(i.person)]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(iR),'Zarobki');
   XLSX.writeFile(wb,`Budzet_Majorki_${new Date().toISOString().slice(0,10)}.xlsx`);
   toast('Excel pobrany ✓','ok');
@@ -1340,7 +1389,7 @@ function doSearch(q){
     `${results.length} wynik${suf} · łącznie ${fmt(total)}`;
 
   document.getElementById('srch-list').innerHTML=results.map(r=>{
-    const pn=names[r.person??0];const pc=(r.person??0)===1?'p1':'p0';
+    const {pn,pc}=pTag(r.person);
     return`<div class="srch-item" onclick="${r.onClick}">
       <div class="srch-item-top">
         <div class="srch-item-name">${r.icon} ${r.nameHl}</div>
