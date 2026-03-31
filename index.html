@@ -47,11 +47,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);max-width:480
 .btn-gear{background:none;border:none;color:rgba(255,255,255,0.45);font-size:18px;cursor:pointer;padding:4px;line-height:1;transition:color 0.2s;}
 .btn-gear:hover{color:var(--gold2);}
 
-.month-bar{background:var(--ink);padding:0 16px 14px;display:flex;align-items:center;gap:8px;overflow-x:auto;scrollbar-width:none;}
-.month-bar::-webkit-scrollbar{display:none;}
-.mchip{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.18s;white-space:nowrap;}
-.mchip.on{background:var(--gold2);border-color:var(--gold2);color:var(--ink);}
-.mchip:hover:not(.on){border-color:rgba(255,255,255,0.4);color:#fff;}
+.month-bar{background:var(--ink);padding:0 16px 12px;display:flex;align-items:center;gap:10px;}
+.month-year-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.09);border:1.5px solid rgba(255,255,255,0.15);border-radius:12px;padding:7px 14px;color:var(--gold2);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.18s;}
+.month-year-btn:hover{border-color:var(--gold2);}
+.month-year-arr{font-size:11px;color:rgba(255,255,255,0.4);}
+.month-cur-lbl{font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);flex:1;text-align:right;}
+
+/* Month picker dropdown */
+.mpick-overlay{position:fixed;inset:0;background:rgba(26,18,8,0.55);z-index:300;display:none;align-items:flex-end;justify-content:center;}
+.mpick-overlay.on{display:flex;}
+.mpick-pan{background:var(--ink);border-radius:22px 22px 0 0;padding:20px 18px 36px;width:100%;max-width:480px;animation:up 0.26s ease;}
+.mpick-handle{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 18px;}
+.mpick-year-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.mpick-year-nav{background:none;border:none;color:rgba(255,255,255,0.5);font-size:22px;cursor:pointer;padding:4px 10px;line-height:1;}
+.mpick-year-nav:hover{color:var(--gold2);}
+.mpick-year-lbl{font-family:var(--serif);font-size:22px;color:var(--gold2);font-weight:700;}
+.mpick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.mpick-btn{background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 4px;font-family:var(--font);font-size:13px;font-weight:600;color:rgba(255,255,255,0.7);cursor:pointer;text-align:center;transition:all 0.15s;}
+.mpick-btn:hover{border-color:var(--gold2);color:var(--gold2);}
+.mpick-btn.on{background:var(--gold2);border-color:var(--gold2);color:var(--ink);}
+.mpick-btn.has-data{color:#fff;}
+.mpick-btn.future{opacity:0.3;cursor:default;}
 
 .hero{margin:16px 16px 12px;background:var(--ink);border-radius:22px;padding:22px 22px 18px;position:relative;overflow:hidden;box-shadow:var(--sh3);}
 .hero::before{content:'';position:absolute;width:260px;height:260px;border-radius:50%;background:rgba(240,184,48,0.05);top:-80px;right:-80px;pointer-events:none;}
@@ -322,7 +338,26 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
   <button class="btn-gear" onclick="openSettings()">⚙️</button>
 </div>
 
-<div class="month-bar" id="month-bar"></div>
+<div class="month-bar" id="month-bar">
+  <button class="month-year-btn" onclick="openMonthPicker()">
+    <span id="mpick-year-lbl">2026</span>
+    <span class="month-year-arr">▾</span>
+  </button>
+  <span class="month-cur-lbl" id="month-cur-lbl"></span>
+</div>
+
+<!-- Month picker overlay -->
+<div class="mpick-overlay" id="mpick-overlay" onclick="if(event.target===this)closeMonthPicker()">
+  <div class="mpick-pan">
+    <div class="mpick-handle"></div>
+    <div class="mpick-year-row">
+      <button class="mpick-year-nav" onclick="mpickYearShift(-1)">‹</button>
+      <div class="mpick-year-lbl" id="mpick-year-disp">2026</div>
+      <button class="mpick-year-nav" onclick="mpickYearShift(1)">›</button>
+    </div>
+    <div class="mpick-grid" id="mpick-grid"></div>
+  </div>
+</div>
 
 <!-- SEARCH BAR -->
 <div class="srch-bar">
@@ -720,19 +755,62 @@ function fmtDate(d){return d.toLocaleDateString('pl-PL',{day:'numeric',month:'lo
 function inPeriod(dateStr,p){return dateStr>=p.start&&dateStr<=p.end;}
 function fmtMonth(m){const d=new Date(m+'-01');const s=d.toLocaleDateString('pl-PL',{month:'short',year:'2-digit'});return s.charAt(0).toUpperCase()+s.slice(1);}
 
+let mpickYear=new Date().getFullYear();
+
 function buildMonthBar(){
-  const months=new Set();
   const now=new Date();
-  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.add(d.toISOString().slice(0,7));}
+  // Zbierz miesiące z danych
+  const months=new Set();
   receipts.forEach(r=>r.data&&months.add(r.data.slice(0,7)));
   incomes.forEach(i=>i.date&&months.add(i.date.slice(0,7)));
   media.forEach(m=>m.date&&months.add(m.date.slice(0,7)));
   events.forEach(e=>e.data&&months.add(e.data.slice(0,7)));
-  const sorted=[...months].sort((a,b)=>b.localeCompare(a));
-  if(!curMonth||!sorted.includes(curMonth))curMonth=sorted[0]||now.toISOString().slice(0,7);
-  const bar=document.getElementById('month-bar');
-  bar.innerHTML=sorted.map(m=>`<button class="mchip${m===curMonth?' on':''}" onclick="selectMonth('${m}')">${fmtMonth(m)}</button>`).join('');
-  setTimeout(()=>{const el=bar.querySelector('.mchip.on');if(el)el.scrollIntoView({inline:'center',block:'nearest'});},50);
+  // Zawsze dodaj bieżący miesiąc
+  months.add(now.toISOString().slice(0,7));
+  if(!curMonth)curMonth=now.toISOString().slice(0,7);
+  // Ustaw rok pickera na rok aktywnego miesiąca
+  mpickYear=parseInt(curMonth.slice(0,4));
+  // Zaktualizuj nagłówek
+  document.getElementById('mpick-year-lbl').textContent=mpickYear;
+  const monthNames=['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
+  const mIdx=parseInt(curMonth.slice(5,7))-1;
+  document.getElementById('month-cur-lbl').textContent=monthNames[mIdx]+' '+mpickYear;
+  window._dataMonths=months;
+}
+
+function openMonthPicker(){
+  mpickYear=parseInt(curMonth.slice(0,4));
+  renderMpickGrid();
+  document.getElementById('mpick-overlay').classList.add('on');
+}
+
+function closeMonthPicker(){
+  document.getElementById('mpick-overlay').classList.remove('on');
+}
+
+function mpickYearShift(d){
+  mpickYear+=d;
+  document.getElementById('mpick-year-disp').textContent=mpickYear;
+  renderMpickGrid();
+}
+
+function renderMpickGrid(){
+  const now=new Date();
+  const nowY=now.getFullYear();
+  const nowM=now.getMonth()+1;
+  const monthNames=['Sty','Lut','Mar','Kwi','Maj','Cze','Lip','Sie','Wrz','Paź','Lis','Gru'];
+  const dataMonths=window._dataMonths||new Set();
+  document.getElementById('mpick-year-disp').textContent=mpickYear;
+  document.getElementById('mpick-grid').innerHTML=monthNames.map((name,i)=>{
+    const m=String(i+1).padStart(2,'0');
+    const key=`${mpickYear}-${m}`;
+    const isOn=key===curMonth;
+    const isFuture=mpickYear>nowY||(mpickYear===nowY&&(i+1)>nowM);
+    const hasData=dataMonths.has(key);
+    const cls='mpick-btn'+(isOn?' on':hasData?' has-data':isFuture?' future':'');
+    const click=isFuture?'':`onclick="selectMonth('${key}');closeMonthPicker()"`;
+    return`<button class="${cls}" ${click}>${name}</button>`;
+  }).join('');
 }
 
 function selectMonth(m){curMonth=m;buildMonthBar();renderAll();}
@@ -810,7 +888,7 @@ function handleFile(e){
   const url=URL.createObjectURL(f);
   img.onload=()=>{
     URL.revokeObjectURL(url);
-    const MAX=1600;
+    const MAX=1200;
     let w=img.width,h=img.height;
     if(w>MAX||h>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
     const canvas=document.createElement('canvas');
@@ -824,7 +902,7 @@ function handleFile(e){
       document.getElementById('prev-img').style.display='block';
       document.getElementById('btn-scan').style.display='block';
       toast(`Gotowe · ${sizeMB} MB`,'ok');
-    },'image/jpeg',0.82);
+    },'image/jpeg',0.75);
   };
   img.onerror=()=>{toast('Błąd wczytywania zdjęcia','err');};
   img.src=url;
