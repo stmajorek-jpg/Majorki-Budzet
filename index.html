@@ -221,7 +221,9 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 
 .rec-num-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;background:#f0e8d0;color:#8a6020;margin-left:4px;vertical-align:middle;}
 /* EUR toggle */
-.eur-row{margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;border:1.5px solid var(--line);}
+.hchip-firm{background:rgba(192,36,42,0.13);border:1px solid rgba(192,36,42,0.25);}
+.hchip-firm-val{color:#ff9494;}
+margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;border:1.5px solid var(--line);}
 .eur-toggle-row{display:flex;align-items:center;justify-content:space-between;}
 .eur-lbl{font-size:13px;font-weight:600;color:var(--ink2);}
 .eur-switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;}
@@ -241,9 +243,12 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 .firma-del{position:absolute;top:50%;right:10px;transform:translateY(-50%);background:none;border:none;color:var(--ink3);font-size:15px;cursor:pointer;opacity:0;}
 .firma-row:hover .firma-del{opacity:1;}
 .firma-del:hover{color:var(--crimson)!important;}
-.firma-sum{display:flex;justify-content:space-between;align-items:center;background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:14px;box-shadow:var(--sh);}
-.firma-sum-lbl{font-size:12px;font-weight:600;color:var(--ink2);}
-.firma-sum-val{font-family:var(--serif);font-size:18px;color:var(--crimson);}
+.firma-summary{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;box-shadow:var(--sh2);}
+.firma-sum-title{font-family:var(--serif);font-size:15px;color:var(--ink);margin-bottom:10px;}
+.firma-sum-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);}
+.firma-sum-row-lbl{font-size:13px;color:var(--ink2);font-weight:500;}
+.firma-sum-row-val{font-family:var(--serif);font-size:14px;color:var(--crimson);font-weight:600;}
+.firma-sum-total-row{display:flex;justify-content:space-between;align-items:center;padding-top:8px;font-weight:700;font-size:14px;color:var(--crimson);}
 
 
 .rec-num-row{margin-top:12px;margin-bottom:4px;}
@@ -426,11 +431,16 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 </div>
 
 <div class="hero">
-  <div class="hero-lbl">Wydatki</div>
+  <div class="hero-lbl">Wydatki domowe + firmowe</div>
   <div class="hero-amt" id="h-exp">0,00 zł</div>
   <div class="hchips">
     <div class="hchip"><div class="hchip-lbl">Zarobki</div><div class="hchip-val" id="h-inc">0,00 zł</div></div>
     <div class="hchip"><div class="hchip-lbl">Saldo</div><div class="hchip-val" id="h-bal">0,00 zł</div></div>
+  </div>
+  <div class="hchips" style="margin-top:8px;">
+    <div class="hchip hchip-firm"><div class="hchip-lbl">ZUS</div><div class="hchip-val hchip-firm-val" id="h-zus">0,00 zł</div></div>
+    <div class="hchip hchip-firm"><div class="hchip-lbl">Podatek</div><div class="hchip-val hchip-firm-val" id="h-pod">0,00 zł</div></div>
+    <div class="hchip hchip-firm"><div class="hchip-lbl">Inne firm.</div><div class="hchip-val hchip-firm-val" id="h-firm-inne">0,00 zł</div></div>
   </div>
 </div>
 <div class="prow">
@@ -1246,11 +1256,17 @@ function renderFirma(){
   const items=firma.filter(f=>f.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date));
   if(!items.length){el.innerHTML='<div class="empty"><span class="empty-ico">🏢</span>Brak wydatków firmowych w tym miesiącu.</div>';return;}
   const total=items.reduce((s,f)=>s+f.amount,0);
-  // group by type
-  const byType={};
-  items.forEach(f=>{byType[f.type]=(byType[f.type]||0)+f.amount;});
-  const sumHtml=`<div class="firma-sum"><span class="firma-sum-lbl">📊 Suma — ${fmtMonth(m)}</span><span class="firma-sum-val">−${fmt(total)}</span></div>`
-    +Object.entries(byType).map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);font-weight:500;margin-bottom:4px;padding:0 2px"><span>${k}</span><span style="font-weight:600;color:var(--crimson)">${fmt(v)}</span></div>`).join('');
+  const zus=items.filter(f=>f.type==='ZUS').reduce((s,f)=>s+f.amount,0);
+  const pod=items.filter(f=>f.type==='Podatek dochodowy').reduce((s,f)=>s+f.amount,0);
+  const inne=items.filter(f=>f.type==='Inne firmowe').reduce((s,f)=>s+f.amount,0);
+  const sumHtml=`
+    <div class="firma-summary">
+      <div class="firma-sum-title">📊 ${fmtMonth(m)}</div>
+      ${zus>0?`<div class="firma-sum-row"><span class="firma-sum-row-lbl">🔵 ZUS</span><span class="firma-sum-row-val">−${fmt(zus)}</span></div>`:''}
+      ${pod>0?`<div class="firma-sum-row"><span class="firma-sum-row-lbl">🔴 Podatek dochodowy</span><span class="firma-sum-row-val">−${fmt(pod)}</span></div>`:''}
+      ${inne>0?`<div class="firma-sum-row"><span class="firma-sum-row-lbl">⚪ Inne firmowe</span><span class="firma-sum-row-val">−${fmt(inne)}</span></div>`:''}
+      <div class="firma-sum-total-row"><span>Łącznie</span><span>−${fmt(total)}</span></div>
+    </div>`;
   el.innerHTML=sumHtml+items.map(f=>`
     <div class="firma-row">
       <div><div class="firma-type">${f.type}</div><div class="firma-desc">${f.date}${f.desc?' · '+f.desc:''}</div></div>
@@ -1281,13 +1297,24 @@ function updateSummary(){
   const expR=receipts.filter(r=>r.data.startsWith(m)).reduce((s,r)=>s+r.suma,0);
   const expM=media.filter(x=>x.date.startsWith(m)).reduce((s,x)=>s+x.amount,0);
   const expE=events.filter(x=>x.data.startsWith(m)).reduce((s,x)=>s+x.amount,0);
-  const expense=expR+expM+expE;
+  const firmaM=firma.filter(f=>f.date.startsWith(m));
+  const expF=firmaM.reduce((s,f)=>s+f.amount,0);
+  const expZUS=firmaM.filter(f=>f.type==='ZUS').reduce((s,f)=>s+f.amount,0);
+  const expPod=firmaM.filter(f=>f.type==='Podatek dochodowy').reduce((s,f)=>s+f.amount,0);
+  const expFInne=firmaM.filter(f=>f.type==='Inne firmowe').reduce((s,f)=>s+f.amount,0);
+  const expense=expR+expM+expE+expF;
   const period=getPeriodForMonth(m);
   const income=incomes.filter(i=>inPeriod(i.date,period)).reduce((s,i)=>s+i.amount,0);
   const balance=income-expense;
   document.getElementById('h-exp').textContent=fmt(expense);
   document.getElementById('h-inc').textContent=fmt(income);
   const bel=document.getElementById('h-bal');bel.textContent=fmt(balance);bel.className='hchip-val'+(balance<0?' neg':'');
+  // Firmowe osobno
+  document.getElementById('h-zus').textContent=fmt(expZUS);
+  document.getElementById('h-pod').textContent=fmt(expPod);
+  document.getElementById('h-firm-inne').textContent=fmt(expFInne);
+  // Ukryj wiersz firm chipów jeśli wszystko 0
+  document.querySelectorAll('.hchip-firm').forEach(el=>el.closest('.hchips').style.opacity=expF>0?'1':'0.4');
   [0,1].forEach(pi=>{
     const pe=receipts.filter(r=>r.data.startsWith(m)&&(r.person??0)===pi).reduce((s,r)=>s+r.suma,0)
       +media.filter(x=>x.date.startsWith(m)&&(x.person??0)===pi).reduce((s,x)=>s+x.amount,0)
@@ -1392,21 +1419,36 @@ function renderIncome(){
   }));
   media.filter(x=>x.date.startsWith(m)).forEach(x=>{expMap[x.type]=(expMap[x.type]||0)+x.amount;});
   events.filter(x=>x.data.startsWith(m)).forEach(x=>{expMap['Wyjście/Impreza']=(expMap['Wyjście/Impreza']||0)+x.amount;});
+  // Firmowe osobno w podsumowaniu
+  const firmaM=firma.filter(f=>f.date.startsWith(m));
+  const expZUS=firmaM.filter(f=>f.type==='ZUS').reduce((s,f)=>s+f.amount,0);
+  const expPod=firmaM.filter(f=>f.type==='Podatek dochodowy').reduce((s,f)=>s+f.amount,0);
+  const expFInne=firmaM.filter(f=>f.type==='Inne firmowe').reduce((s,f)=>s+f.amount,0);
+  const expF=expZUS+expPod+expFInne;
+  if(expZUS>0)expMap['ZUS 🏢']=expZUS;
+  if(expPod>0)expMap['Podatek dochodowy 🏢']=expPod;
+  if(expFInne>0)expMap['Inne firmowe 🏢']=expFInne;
   const totalExp=Object.values(expMap).reduce((s,v)=>s+v,0);
   const totalInc=periodIncomes.reduce((s,i)=>s+i.amount,0);
   const sortedExp=Object.entries(expMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
 
   const summaryHtml=sortedExp.length?`
     <div class="inc-summary-card">
-      <div class="inc-sum-title">📊 Podliczenie wydatków — <span style="color:var(--gold)">${fmtMonth(m)}</span></div>
+      <div class="inc-sum-title">📊 Podliczenie — <span style="color:var(--gold)">${fmtMonth(m)}</span></div>
       <div class="inc-sum-rows">
-        ${sortedExp.map(([k,v])=>`<div class="inc-sum-row"><span class="inc-sum-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COL[k]||COL['Inne']};margin-right:6px;vertical-align:middle"></span>${k}</span><span class="inc-sum-val">${fmt(v)}</span></div>`).join('')}
+        ${sortedExp.map(([k,v])=>{
+          const isFirm=k.endsWith('🏢');
+          const col=isFirm?'var(--crimson)':(COL[k.replace(' 🏢','')]||COL['Inne']);
+          const dot=isFirm?`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--crimson);margin-right:6px;vertical-align:middle"></span>`:`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${col};margin-right:6px;vertical-align:middle"></span>`;
+          return`<div class="inc-sum-row"><span class="inc-sum-name">${dot}${k}</span><span class="inc-sum-val" style="color:${isFirm?'var(--crimson)':'var(--gold)'}">${fmt(v)}</span></div>`;
+        }).join('')}
       </div>
+      ${expF>0?`<div class="inc-sum-row" style="border-top:1px solid var(--line);padding-top:6px;margin-top:2px;"><span style="font-size:12px;color:var(--ink2);font-weight:600;">w tym firmowe</span><span style="font-family:var(--serif);font-size:13px;color:var(--crimson);">−${fmt(expF)}</span></div>`:''}
       <div class="inc-sum-total"><span>Suma wydatków</span><span class="inc-sum-total-val">${fmt(totalExp)}</span></div>
       <div class="inc-sum-balance" style="color:${totalInc-totalExp>=0?'var(--emerald)':'var(--crimson)'}">
         <span>Saldo okresu</span><span>${totalInc-totalExp>=0?'+':''}${fmt(totalInc-totalExp)}</span>
       </div>
-    </div>`:'' ;
+    </div>`:'';
 
   el.innerHTML=Object.entries(grouped).sort((a,b)=>b[0].localeCompare(a[0])).map(([month,items])=>{
     const ml=new Date(month+'-01').toLocaleDateString('pl-PL',{month:'long',year:'numeric'});
