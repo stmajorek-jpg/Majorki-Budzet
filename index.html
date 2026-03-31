@@ -219,7 +219,47 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 .sh-note-inp:focus{border-color:var(--gold);}
 .card-note{font-size:11px;color:var(--ink2);margin-top:3px;font-style:italic;}
 
-/* Income summary card */
+.rec-num-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;background:#f0e8d0;color:#8a6020;margin-left:4px;vertical-align:middle;}
+/* EUR toggle */
+.eur-row{margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;border:1.5px solid var(--line);}
+.eur-toggle-row{display:flex;align-items:center;justify-content:space-between;}
+.eur-lbl{font-size:13px;font-weight:600;color:var(--ink2);}
+.eur-switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0;}
+.eur-switch input{opacity:0;width:0;height:0;}
+.eur-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:24px;transition:.2s;}
+.eur-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;}
+.eur-switch input:checked + .eur-slider{background:#2563eb;}
+.eur-switch input:checked + .eur-slider:before{transform:translateX(20px);}
+.eur-result{font-size:13px;font-weight:600;color:#2563eb;margin-top:6px;min-height:18px;}
+.eur-badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;background:#dbeafe;color:#1d4ed8;margin-left:4px;vertical-align:middle;}
+.card.eur{border-color:#93c5fd;background:linear-gradient(135deg,#fff 80%,#eff6ff);}
+/* Firma */
+.firma-row{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;box-shadow:var(--sh);position:relative;padding-right:40px;}
+.firma-type{font-weight:600;font-size:14px;}
+.firma-desc{font-size:11px;color:var(--ink3);font-weight:500;margin-top:2px;}
+.firma-val{font-family:var(--serif);font-size:17px;color:var(--crimson);white-space:nowrap;}
+.firma-del{position:absolute;top:50%;right:10px;transform:translateY(-50%);background:none;border:none;color:var(--ink3);font-size:15px;cursor:pointer;opacity:0;}
+.firma-row:hover .firma-del{opacity:1;}
+.firma-del:hover{color:var(--crimson)!important;}
+.firma-sum{display:flex;justify-content:space-between;align-items:center;background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:14px;box-shadow:var(--sh);}
+.firma-sum-lbl{font-size:12px;font-weight:600;color:var(--ink2);}
+.firma-sum-val{font-family:var(--serif);font-size:18px;color:var(--crimson);}
+
+
+.rec-num-row{margin-top:12px;margin-bottom:4px;}
+.rec-num-lbl{font-size:10px;color:var(--ink2);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:5px;}
+.rec-num-inp{width:100%;background:var(--paper2);border:1.5px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--ink);font-family:var(--font);font-size:14px;font-weight:500;outline:none;}
+.rec-num-inp:focus{border-color:var(--gold);}
+.rec-num-inp.warn{border-color:var(--gold2);background:#fffbee;}
+.rec-num-warn{font-size:12px;color:var(--gold);font-weight:600;margin-top:5px;display:none;}
+.rec-num-warn.on{display:block;}
+.dup-warn{display:none;background:#fde8e8;border:1.5px solid var(--crimson);border-radius:12px;padding:12px 14px;margin-top:10px;gap:10px;align-items:flex-start;}
+.dup-warn.on{display:flex;}
+.dup-warn-ico{font-size:20px;flex-shrink:0;line-height:1.2;}
+.dup-warn-txt{font-size:13px;color:var(--crimson);line-height:1.5;}
+.btn-ok-force{margin-top:6px;}
+
+
 .inc-summary-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:16px;box-shadow:var(--sh2);}
 .inc-sum-title{font-family:var(--serif);font-size:15px;color:var(--ink);margin-bottom:12px;}
 .inc-sum-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:10px;}
@@ -403,6 +443,7 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
   <button class="nav-btn" onclick="switchTab('receipts')">🧾<br>Paragony</button>
   <button class="nav-btn" onclick="switchTab('cats')">📊<br>Kategorie</button>
   <button class="nav-btn" onclick="switchTab('income')">💰<br>Zarobki</button>
+  <button class="nav-btn" onclick="switchTab('firma')">🏢<br>Firma</button>
 </div>
 
 <!-- SCAN -->
@@ -427,6 +468,41 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
     <div class="res-meta" id="res-meta"></div>
     <div class="res-items" id="res-items"></div>
     <div class="res-total"><span>Suma</span><span class="res-total-val" id="res-total"></span></div>
+    <!-- Waluta EUR -->
+    <div class="eur-row" id="eur-row">
+      <div class="eur-toggle-row">
+        <span class="eur-lbl">💶 Paragon w euro?</span>
+        <label class="eur-switch">
+          <input type="checkbox" id="eur-chk" onchange="toggleEur(this.checked)">
+          <span class="eur-slider"></span>
+        </label>
+      </div>
+      <div class="eur-fields" id="eur-fields" style="display:none">
+        <div class="f2" style="margin-top:8px;">
+          <div class="frow">
+            <div class="flbl">Kwota EUR</div>
+            <input class="finp" type="number" id="eur-amt" placeholder="24.99" step="0.01" oninput="calcEur()">
+          </div>
+          <div class="frow">
+            <div class="flbl">Kurs EUR/PLN</div>
+            <input class="finp" type="number" id="eur-rate" placeholder="4.28" step="0.0001" oninput="calcEur()">
+          </div>
+        </div>
+        <div class="eur-result" id="eur-result"></div>
+      </div>
+    </div>
+    <div class="rec-num-row">
+      <div class="rec-num-lbl">🔢 Numer paragonu</div>
+      <input class="rec-num-inp" id="rec-num-inp" type="text" placeholder="np. 1234 lub 12/45">
+      <div class="rec-num-warn" id="rec-num-warn">⚠️ AI nie odczytało numeru — wpisz ręcznie</div>
+    </div>
+    <div class="dup-warn" id="dup-warn">
+      <div class="dup-warn-ico">⚠️</div>
+      <div class="dup-warn-txt">
+        <strong>Możliwy duplikat!</strong><br>
+        <span id="dup-warn-detail"></span>
+      </div>
+    </div>
     <div style="margin-top:12px;font-size:10px;color:var(--ink2);font-weight:600;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">Czyj paragon?</div>
     <div class="psel">
       <button class="pbtn on" id="pb0" onclick="selP(0)">👨 <span id="pn0">Stanisław</span></button>
@@ -434,7 +510,8 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
       <button class="pbtn" id="pb2" onclick="selP(2)">🤝 Wspólne</button>
     </div>
     <button class="btn-dl" id="btn-dl" onclick="saveImg()">💾 Zapisz zdjęcie na telefon</button>
-    <button class="btn-ok" onclick="saveReceipt()">✓ Zapisz paragon</button>
+    <button class="btn-ok" id="btn-ok-save" onclick="saveReceipt()">✓ Zapisz paragon</button>
+    <button class="btn-ok btn-ok-force" id="btn-ok-force" onclick="saveReceipt(true)" style="display:none;background:#c0242a;">⚠️ Zapisz mimo to (duplikat)</button>
   </div>
 </div>
 
@@ -531,11 +608,36 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
   <div id="inc-list"><div class="empty"><span class="empty-ico">💰</span>Brak wpisów.</div></div>
 </div>
 
+<!-- FIRMA -->
+<div class="sec" id="tab-firma">
+  <div class="sec-title">Firma</div>
+  <div class="fcard">
+    <div class="fttl">Dodaj wydatek firmowy</div>
+    <div class="f2">
+      <div class="frow"><div class="flbl">Rodzaj</div>
+        <select class="fsel" id="firm-type">
+          <option value="Podatek dochodowy">Podatek dochodowy</option>
+          <option value="ZUS">ZUS</option>
+          <option value="Inne firmowe">Inne firmowe</option>
+        </select>
+      </div>
+      <div class="frow"><div class="flbl">Kwota (zł)</div><input class="finp" type="number" id="firm-amt" placeholder="1500"></div>
+    </div>
+    <div class="f2">
+      <div class="frow"><div class="flbl">Data</div><input class="finp" type="date" id="firm-date"></div>
+      <div class="frow"><div class="flbl">Opis (opcjonalnie)</div><input class="finp" type="text" id="firm-desc" placeholder="np. ZUS grudzień"></div>
+    </div>
+    <button class="btn-add" onclick="addFirma()">+ Dodaj wydatek</button>
+  </div>
+  <div id="firma-list"><div class="empty"><span class="empty-ico">🏢</span>Brak wydatków firmowych.</div></div>
+</div>
+
 <div class="bnav">
   <button class="bnav-btn active" id="bn-scan" onclick="switchTab('scan')"><span class="bnav-ico">📷</span>Skanuj</button>
   <button class="bnav-btn" id="bn-receipts" onclick="switchTab('receipts')"><span class="bnav-ico">🧾</span>Paragony</button>
   <button class="bnav-btn" id="bn-cats" onclick="switchTab('cats')"><span class="bnav-ico">📊</span>Kategorie</button>
   <button class="bnav-btn" id="bn-income" onclick="switchTab('income')"><span class="bnav-ico">💰</span>Zarobki</button>
+  <button class="bnav-btn" id="bn-firma" onclick="switchTab('firma')"><span class="bnav-ico">🏢</span>Firma</button>
 </div>
 
 </div><!-- end #app -->
@@ -604,6 +706,7 @@ let receipts=DB.get('receipts',[]);
 let incomes=DB.get('incomes',[]);
 let media=DB.get('media',[]);
 let events=DB.get('events',[]);
+let firma=DB.get('firma',[]);
 let names=DB.get('names',['Stanisław','Agnieszka']);
 const PERSON_LABELS=['p0','p1','p2'];
 let periodDay=DB.get('periodDay',1);
@@ -741,6 +844,7 @@ window.onload=async()=>{
   document.getElementById('inc-date').value=today;
   document.getElementById('med-date').value=today;
   document.getElementById('evt-date').value=today;
+  document.getElementById('firm-date').value=today;
   applyNames();
   buildMonthBar();
   if(!DB.get('api_key',''))document.getElementById('api-p').classList.add('on');
@@ -835,15 +939,19 @@ function renderMpickGrid(){
 }
 
 function selectMonth(m){curMonth=m;buildMonthBar();renderAll();}
-function renderAll(){updateSummary();renderReceipts();renderMedia();renderEvents();renderCats();renderIncome();}
+function renderAll(){updateSummary();renderReceipts();renderMedia();renderEvents();renderCats();renderIncome();renderFirma();}
+
+const ALL_TABS=['scan','receipts','cats','income','firma'];
 
 function switchTab(tab){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn,.bnav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('bn-'+tab).classList.add('active');
-  document.querySelectorAll('.nav-btn')[['scan','receipts','cats','income'].indexOf(tab)].classList.add('active');
+  const idx=ALL_TABS.indexOf(tab);
+  if(idx>=0)document.querySelectorAll('.nav-btn')[idx]?.classList.add('active');
   if(tab==='cats')renderCats();
+  if(tab==='firma')renderFirma();
 }
 
 function switchSub(s){
@@ -888,8 +996,8 @@ function showPeriodPreview(){
 function resetData(){
   if(!confirm('Usunąć WSZYSTKIE dane? Tej operacji nie można cofnąć!'))return;
   if(!confirm('Na pewno? Paragony, zarobki, rachunki — wszystko zostanie skasowane.'))return;
-  ['receipts','incomes','media','events'].forEach(k=>DB.del(k));
-  receipts=[];incomes=[];media=[];events=[];
+  ['receipts','incomes','media','events','firma'].forEach(k=>DB.del(k));
+  receipts=[];incomes=[];media=[];events=[];firma=[];
   buildMonthBar();renderAll();closeSett();
   toast('Dane usunięte','ok');
 }
@@ -946,7 +1054,8 @@ async function doScan(){
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:mt,data:b64}},
           {type:'text',text:`Przeanalizuj paragon. Dla każdego produktu przypisz najlepiej pasującą kategorię z listy: ${CATS.join(', ')}.
-Zwróć JSON: {"sklep":"nazwa","data":"YYYY-MM-DD","godzina":"HH:MM","suma":99.99,"produkty":[{"nazwa":"nazwa","ilosc":1.0,"jednostka":"szt","cena_jednostkowa":9.99,"suma":9.99,"kategoria":"Nabiał"}]}
+Zwróć JSON: {"sklep":"nazwa","data":"YYYY-MM-DD","godzina":"HH:MM","numer_paragonu":"1234","suma":99.99,"produkty":[{"nazwa":"nazwa","ilosc":1.0,"jednostka":"szt","cena_jednostkowa":9.99,"suma":9.99,"kategoria":"Nabiał"}]}
+Pole "numer_paragonu" to numer widoczny na paragonie (np. "1234", "12/45"). Jeśli numer jest niewidoczny lub nieczytelny, ustaw null.
 Tylko JSON, nic więcej.`}
         ]}]})
     });
@@ -971,6 +1080,23 @@ function showResult(d){
       <div class="res-item-sub">${p.ilosc} ${p.jednostka||'szt'} · <span class="cpill" style="background:${c}22;color:${c}">${p.kategoria||'Inne'}</span></div>
     </div><div class="res-item-price">${fmt(p.suma||p.cena_jednostkowa)}</div></div>`;
   }).join('');
+  // Numer paragonu
+  const numInp=document.getElementById('rec-num-inp');
+  const numWarn=document.getElementById('rec-num-warn');
+  const numFromAI=d.numer_paragonu||null;
+  if(numFromAI){
+    numInp.value=numFromAI;
+    numInp.classList.remove('warn');
+    numWarn.classList.remove('on');
+  } else {
+    numInp.value='';
+    numInp.classList.add('warn');
+    numWarn.classList.add('on');
+  }
+  // Reset dup warning
+  document.getElementById('dup-warn').classList.remove('on');
+  document.getElementById('btn-ok-force').style.display='none';
+  document.getElementById('btn-ok-save').style.display='block';
   document.getElementById('result-box').style.display='block';
 }
 
@@ -984,19 +1110,73 @@ function saveImg(){
   toast('Zdjęcie pobrane ✓','ok');
 }
 
-function saveReceipt(){
+function checkDuplicate(sklep,data,suma,numer){
+  // Sprawdź wszystkie 4 kryteria — duplikat tylko gdy pasują wszystkie dostępne
+  return receipts.find(r=>{
+    const sameShop=r.sklep&&sklep&&r.sklep.toLowerCase()===sklep.toLowerCase();
+    const sameDate=r.data===data;
+    const sameSuma=Math.abs(r.suma-suma)<0.01;
+    const sameNum=numer&&r.numer_paragonu?r.numer_paragonu===numer:true; // jeśli któryś brak — nie blokuj po numerze
+    return sameShop&&sameDate&&sameSuma&&sameNum;
+  })||null;
+}
+
+function saveReceipt(force=false){
   if(!window._pend)return;
-  const rec={id:Date.now(),sklep:window._pend.sklep||'Nieznany sklep',data:window._pend.data||new Date().toISOString().split('T')[0],godzina:window._pend.godzina||'',suma:parseFloat(window._pend.suma)||0,produkty:(window._pend.produkty||[]).map(p=>({...p,suma:parseFloat(p.suma||p.cena_jednostkowa||0),cena_jednostkowa:parseFloat(p.cena_jednostkowa||0)})),person:curP};
+  const sklep=window._pend.sklep||'Nieznany sklep';
+  const data=window._pend.data||new Date().toISOString().split('T')[0];
+  const suma=parseFloat(window._pend.suma)||0;
+  const numer=document.getElementById('rec-num-inp').value.trim()||null;
+
+  // Blokada gdy brak numeru i użytkownik nie wpisał
+  if(!numer&&!force){
+    const numInp=document.getElementById('rec-num-inp');
+    numInp.classList.add('warn');
+    numInp.focus();
+    toast('Wpisz numer paragonu!','err');
+    return;
+  }
+
+  // Sprawdź duplikat (chyba że force)
+  if(!force){
+    const dup=checkDuplicate(sklep,data,suma,numer);
+    if(dup){
+      const dupDate=dup.data;const dupSuma=fmt(dup.suma);const dupNum=dup.numer_paragonu||'brak nr';
+      document.getElementById('dup-warn-detail').textContent=`Już masz paragon: ${dup.sklep}, ${dupDate}, ${dupSuma}, nr ${dupNum}`;
+      document.getElementById('dup-warn').classList.add('on');
+      document.getElementById('btn-ok-save').style.display='none';
+      document.getElementById('btn-ok-force').style.display='block';
+      toast('Wykryto duplikat!','err');
+      return;
+    }
+  }
+
+  // Zbierz dane EUR
+  const eurOn=document.getElementById('eur-chk').checked;
+  const eurAmt=eurOn?parseFloat(document.getElementById('eur-amt').value)||null:null;
+  const eurRate=eurOn?parseFloat(document.getElementById('eur-rate').value)||null:null;
+  const sumaEurPLN=(eurOn&&eurAmt&&eurRate)?parseFloat((eurAmt*eurRate).toFixed(2)):null;
+
+  const rec={id:Date.now(),sklep,data,godzina:window._pend.godzina||'',numer_paragonu:numer,suma: sumaEurPLN||suma,suma_oryg:eurOn?suma:null,waluta:eurOn?'EUR':'PLN',eur_kwota:eurAmt,eur_kurs:eurRate,produkty:(window._pend.produkty||[]).map(p=>({...p,suma:parseFloat(p.suma||p.cena_jednostkowa||0),cena_jednostkowa:parseFloat(p.cena_jednostkowa||0)})),person:curP};
   receipts.unshift(rec);DB.set('receipts',receipts);
   window._pend=null;curFile=null;
   ['result-box','prev-img'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('btn-scan').style.display='none';
   document.getElementById('btn-dl').style.display='none';
-  // Reset file input żeby można było skanować kolejny paragon
   document.getElementById('file-input').value='';
+  document.getElementById('rec-num-inp').value='';
+  document.getElementById('rec-num-inp').classList.remove('warn');
+  document.getElementById('rec-num-warn').classList.remove('on');
+  document.getElementById('dup-warn').classList.remove('on');
+  document.getElementById('btn-ok-force').style.display='none';
+  document.getElementById('btn-ok-save').style.display='block';
+  document.getElementById('eur-chk').checked=false;
+  document.getElementById('eur-fields').style.display='none';
+  document.getElementById('eur-amt').value='';
+  document.getElementById('eur-rate').value='';
+  document.getElementById('eur-result').textContent='';
   selP(0);
   buildMonthBar();
-  // Ustaw miesiąc na miesiąc zapisanego paragonu
   curMonth=rec.data.slice(0,7);
   renderAll();
   toast('Paragon zapisany ✓','ok');
@@ -1040,6 +1220,60 @@ function addIncome(){
   document.getElementById('inc-amt').value='';
   buildMonthBar();renderAll();toast('Dodano ✓','ok');
 }
+function addFirma(){
+  const amt=parseFloat(document.getElementById('firm-amt').value);
+  const date=document.getElementById('firm-date').value;
+  const type=document.getElementById('firm-type').value;
+  const desc=document.getElementById('firm-desc').value.trim();
+  if(!amt||amt<=0){toast('Podaj kwotę!','err');return;}
+  if(!date){toast('Podaj datę!','err');return;}
+  firma.unshift({id:Date.now(),type,desc,amount:amt,date});
+  DB.set('firma',firma);
+  document.getElementById('firm-amt').value='';
+  document.getElementById('firm-desc').value='';
+  buildMonthBar();renderAll();toast('Dodano ✓','ok');
+}
+function delFirma(id,e){
+  e.stopPropagation();
+  if(!confirm('Usunąć wydatek firmowy?'))return;
+  firma=firma.filter(f=>f.id!==id);
+  DB.set('firma',firma);
+  renderFirma();toast('Usunięto','ok');
+}
+function renderFirma(){
+  const m=curMonth;
+  const el=document.getElementById('firma-list');
+  const items=firma.filter(f=>f.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!items.length){el.innerHTML='<div class="empty"><span class="empty-ico">🏢</span>Brak wydatków firmowych w tym miesiącu.</div>';return;}
+  const total=items.reduce((s,f)=>s+f.amount,0);
+  // group by type
+  const byType={};
+  items.forEach(f=>{byType[f.type]=(byType[f.type]||0)+f.amount;});
+  const sumHtml=`<div class="firma-sum"><span class="firma-sum-lbl">📊 Suma — ${fmtMonth(m)}</span><span class="firma-sum-val">−${fmt(total)}</span></div>`
+    +Object.entries(byType).map(([k,v])=>`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink2);font-weight:500;margin-bottom:4px;padding:0 2px"><span>${k}</span><span style="font-weight:600;color:var(--crimson)">${fmt(v)}</span></div>`).join('');
+  el.innerHTML=sumHtml+items.map(f=>`
+    <div class="firma-row">
+      <div><div class="firma-type">${f.type}</div><div class="firma-desc">${f.date}${f.desc?' · '+f.desc:''}</div></div>
+      <div class="firma-val">−${fmt(f.amount)}</div>
+      <button class="firma-del" onclick="delFirma(${f.id},event)">🗑️</button>
+    </div>`).join('');
+}
+
+// EUR
+function toggleEur(on){
+  document.getElementById('eur-fields').style.display=on?'block':'none';
+  if(!on){document.getElementById('eur-result').textContent='';}
+}
+function calcEur(){
+  const amt=parseFloat(document.getElementById('eur-amt').value)||0;
+  const rate=parseFloat(document.getElementById('eur-rate').value)||0;
+  const res=document.getElementById('eur-result');
+  if(amt>0&&rate>0){
+    res.textContent=`${amt.toFixed(2)} EUR × ${rate} = ${fmt(amt*rate)}`;
+  } else {
+    res.textContent='';
+  }
+}
 
 // Summary
 function updateSummary(){
@@ -1070,10 +1304,13 @@ function renderReceipts(){
   if(!recs.length){el.innerHTML='<div class="empty"><span class="empty-ico">🧾</span>Brak paragonów w tym miesiącu.</div>';return;}
   el.innerHTML=recs.map(r=>{
     const {pn,pc}=pTag(r.person);
-    return`<div class="card" onclick="openDet(${r.id})">
+    const numTag=r.numer_paragonu?`<span class="rec-num-badge">nr ${r.numer_paragonu}</span>`:'';
+    const eurTag=r.waluta==='EUR'?`<span class="eur-badge">💶 EUR ${r.eur_kwota?r.eur_kwota.toFixed(2):''} × ${r.eur_kurs||''}</span>`:'';
+    const eurCls=r.waluta==='EUR'?' eur':'';
+    return`<div class="card${eurCls}" onclick="openDet(${r.id})">
       <button class="card-del" onclick="delR(${r.id},event)">🗑️</button>
       <div class="card-top"><div class="card-ttl">🧾 ${r.sklep}</div><div class="card-amt">${fmt(r.suma)}</div></div>
-      <div class="card-meta">${r.data}${r.godzina?' · '+r.godzina:''} · ${(r.produkty||[]).length} poz.</div>
+      <div class="card-meta">${r.data}${r.godzina?' · '+r.godzina:''} · ${(r.produkty||[]).length} poz. ${numTag}${eurTag}</div>
       ${r.notatka?`<div class="card-note">📝 ${r.notatka}</div>`:''}
       <span class="ptag ${pc}">${pn}</span>
     </div>`;
@@ -1188,7 +1425,8 @@ function openDet(id){
     const catOpts=CATS.map(c=>`<option value="${c}">${c}</option>`).join('');
     let html=`<div class="sh-handle"></div>
       <div class="sh-title">🧾 ${r.sklep}</div>
-      <div class="sh-meta">${r.data}${r.godzina?' · '+r.godzina:''}<span class="ptag ${pc}">${pn}</span></div>`;
+      <div class="sh-meta">${r.data}${r.godzina?' · '+r.godzina:''}<span class="ptag ${pc}">${pn}</span>${r.numer_paragonu?`<span class="rec-num-badge" style="margin-left:4px">nr ${r.numer_paragonu}</span>`:''}</div>
+      ${r.waluta==='EUR'?`<div style="background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:9px 13px;margin-bottom:10px;font-size:13px;color:#1d4ed8;font-weight:500;">💶 ${r.eur_kwota?r.eur_kwota.toFixed(2):''} EUR × ${r.eur_kurs||''} = ${fmt(r.suma)} (kurs z dnia ${r.data})</div>`:''}`;
     if(r.produkty&&r.produkty.length){
       html+='<div class="di-list">'+r.produkty.map((p,i)=>{
         const c=COL[p.kategoria]||COL['Inne'];
@@ -1288,7 +1526,7 @@ function getPName(p){const pi=p??0;return pi===2?'Wspólne':(names[pi]||names[0]
 function exportXlsx(){
   if(!window.XLSX){toast('Ładowanie...','');return;}
   const wb=XLSX.utils.book_new();
-  const rR=[['Data','Godzina','Sklep','Suma','Osoba']];receipts.forEach(r=>rR.push([r.data,r.godzina||'',r.sklep,r.suma,getPName(r.person)]));
+  const rR=[['Data','Godzina','Nr paragonu','Sklep','Suma','Osoba']];receipts.forEach(r=>rR.push([r.data,r.godzina||'',r.numer_paragonu||'',r.sklep,r.suma,getPName(r.person)]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rR),'Paragony');
   const pR=[['Data','Sklep','Produkt','Kategoria','Ilość','Jedn.','Cena jedn.','Suma','Osoba']];receipts.forEach(r=>(r.produkty||[]).forEach(p=>pR.push([r.data,r.sklep,p.nazwa,p.kategoria||'Inne',p.ilosc,p.jednostka||'szt',p.cena_jednostkowa,p.suma,getPName(r.person)])));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pR),'Produkty');
