@@ -220,7 +220,42 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 .card-note{font-size:11px;color:var(--ink2);margin-top:3px;font-style:italic;}
 
 .rec-num-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:8px;background:#f0e8d0;color:#8a6020;margin-left:4px;vertical-align:middle;}
-/* EUR toggle */
+/* ── SKLEPY ── */
+.sklepy-period{font-size:12px;color:var(--ink2);font-weight:500;margin-bottom:14px;background:var(--gold-light);border:1.5px solid var(--gold2);border-radius:10px;padding:8px 12px;}
+.sklep-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;margin-bottom:10px;box-shadow:var(--sh);cursor:pointer;transition:all 0.15s;}
+.sklep-card:hover{box-shadow:var(--sh2);border-color:var(--gold);}
+.sklep-card:active{transform:scale(0.98);}
+.sklep-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.sklep-name{font-weight:700;font-size:15px;display:flex;align-items:center;gap:8px;}
+.sklep-total{font-family:var(--serif);font-size:18px;color:var(--gold);}
+.sklep-bar-wrap{height:5px;background:var(--paper3);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.sklep-bar-fill{height:100%;border-radius:3px;background:var(--gold2);transition:width 0.5s;}
+.sklep-meta{display:flex;gap:10px;flex-wrap:wrap;}
+.sklep-chip{font-size:11px;font-weight:600;color:var(--ink2);background:var(--paper2);border-radius:8px;padding:3px 9px;}
+.sklep-chip.vis{color:var(--gold);background:var(--gold-light);}
+/* Sklep drill sheet */
+.sklep-drill-rec{background:var(--paper2);border-radius:10px;padding:9px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.sklep-drill-l{flex:1;min-width:0;}
+.sklep-drill-date{font-size:12px;font-weight:600;color:var(--ink);}
+.sklep-drill-meta{font-size:11px;color:var(--ink3);margin-top:2px;}
+.sklep-drill-amt{font-family:var(--serif);font-size:14px;font-weight:700;color:var(--gold);white-space:nowrap;}
+.sklep-drill-total{display:flex;justify-content:space-between;padding-top:10px;border-top:1px solid var(--line);font-weight:700;font-size:14px;margin-top:4px;}
+.sklep-drill-total-val{font-family:var(--serif);font-size:19px;color:var(--gold);}
+.sklep-rank{display:inline-block;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--gold2);font-size:11px;font-weight:700;text-align:center;line-height:22px;flex-shrink:0;}
+.sklep-rank.r1{background:#c8900a;}
+.sklep-rank.r2{background:#888;}
+.sklep-rank.r3{background:#a0674a;}
+
+.crop-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.crop-hint{font-size:12px;color:var(--ink2);font-weight:500;}
+.crop-btns{display:flex;gap:6px;}
+.crop-btn-reset,.crop-btn-rot{background:var(--paper2);border:1.5px solid var(--line);border-radius:9px;padding:5px 11px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;}
+.crop-btn-reset:active,.crop-btn-rot:active{background:var(--paper3);}
+.crop-canvas-wrap{position:relative;width:100%;border-radius:12px;overflow:hidden;background:#111;touch-action:none;}
+#crop-canvas{display:block;width:100%;height:auto;cursor:crosshair;}
+.btn-crop-apply{flex:1;background:var(--gold);color:#fff;border:none;border-radius:12px;padding:13px;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 3px 12px rgba(200,144,10,0.3);}
+.btn-crop-skip{flex:1;background:var(--paper2);border:1.5px solid var(--line);border-radius:12px;padding:13px;font-family:var(--font);font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;}
+
 .hchip-firm{background:rgba(192,36,42,0.13);border:1px solid rgba(192,36,42,0.25);}
 .hchip-firm-val{color:#ff9494;}
 margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;border:1.5px solid var(--line);}
@@ -454,6 +489,7 @@ margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;bo
   <button class="nav-btn" onclick="switchTab('cats')">📊<br>Kategorie</button>
   <button class="nav-btn" onclick="switchTab('income')">💰<br>Zarobki</button>
   <button class="nav-btn" onclick="switchTab('firma')">🏢<br>Firma</button>
+  <button class="nav-btn" onclick="switchTab('sklepy')">🛒<br>Sklepy</button>
 </div>
 
 <!-- SCAN -->
@@ -469,6 +505,23 @@ margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;bo
     <div class="scan-ttl">Zrób zdjęcie paragonu</div>
     <div class="scan-sub">Dotknij żeby otworzyć aparat lub galerię</div>
     <button class="btn-cam">Aparat / Galeria</button>
+  </div>
+  <!-- CROP EDITOR -->
+  <div id="crop-box" style="display:none;margin-top:10px;">
+    <div class="crop-toolbar">
+      <span class="crop-hint">✂️ Przeciągnij rogi żeby przyciąć paragon</span>
+      <div class="crop-btns">
+        <button class="crop-btn-reset" onclick="cropReset()">↺ Reset</button>
+        <button class="crop-btn-rot" onclick="cropRotate()">⟳ Obróć</button>
+      </div>
+    </div>
+    <div class="crop-canvas-wrap" id="crop-canvas-wrap">
+      <canvas id="crop-canvas"></canvas>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn-crop-apply" onclick="applyCrop()">✓ Przytnij i użyj</button>
+      <button class="btn-crop-skip" onclick="skipCrop()">Użyj oryginału →</button>
+    </div>
   </div>
   <img id="prev-img" alt="">
   <button class="btn-scan" id="btn-scan" onclick="doScan()">Skanuj paragon →</button>
@@ -642,12 +695,20 @@ margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;bo
   <div id="firma-list"><div class="empty"><span class="empty-ico">🏢</span>Brak wydatków firmowych.</div></div>
 </div>
 
+<!-- SKLEPY -->
+<div class="sec" id="tab-sklepy">
+  <div class="sec-title">Sklepy</div>
+  <div class="sklepy-period" id="sklepy-period"></div>
+  <div id="sklepy-list"><div class="empty"><span class="empty-ico">🛒</span>Brak paragonów w tym miesiącu.</div></div>
+</div>
+
 <div class="bnav">
   <button class="bnav-btn active" id="bn-scan" onclick="switchTab('scan')"><span class="bnav-ico">📷</span>Skanuj</button>
   <button class="bnav-btn" id="bn-receipts" onclick="switchTab('receipts')"><span class="bnav-ico">🧾</span>Paragony</button>
   <button class="bnav-btn" id="bn-cats" onclick="switchTab('cats')"><span class="bnav-ico">📊</span>Kategorie</button>
   <button class="bnav-btn" id="bn-income" onclick="switchTab('income')"><span class="bnav-ico">💰</span>Zarobki</button>
   <button class="bnav-btn" id="bn-firma" onclick="switchTab('firma')"><span class="bnav-ico">🏢</span>Firma</button>
+  <button class="bnav-btn" id="bn-sklepy" onclick="switchTab('sklepy')"><span class="bnav-ico">🛒</span>Sklepy</button>
 </div>
 
 </div><!-- end #app -->
@@ -949,9 +1010,9 @@ function renderMpickGrid(){
 }
 
 function selectMonth(m){curMonth=m;buildMonthBar();renderAll();}
-function renderAll(){updateSummary();renderReceipts();renderMedia();renderEvents();renderCats();renderIncome();renderFirma();}
+function renderAll(){updateSummary();renderReceipts();renderMedia();renderEvents();renderCats();renderIncome();renderFirma();renderSklepy();}
 
-const ALL_TABS=['scan','receipts','cats','income','firma'];
+const ALL_TABS=['scan','receipts','cats','income','firma','sklepy'];
 
 function switchTab(tab){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
@@ -962,6 +1023,7 @@ function switchTab(tab){
   if(idx>=0)document.querySelectorAll('.nav-btn')[idx]?.classList.add('active');
   if(tab==='cats')renderCats();
   if(tab==='firma')renderFirma();
+  if(tab==='sklepy')renderSklepy();
 }
 
 function switchSub(s){
@@ -1015,36 +1077,238 @@ function resetData(){
 // Scan
 function selP(i){curP=i;[0,1,2].forEach(j=>{const el=document.getElementById('pb'+j);if(el)el.classList.toggle('on',j===i);});}
 
+// ── CROP SYSTEM ──
+let cropImg=null,cropRotDeg=0;
+let cropBox={x:0.05,y:0.05,w:0.9,h:0.9}; // normalized 0-1
+let cropDrag=null; // {type:'corner'|'body', corner:'tl'|'tr'|'bl'|'br', ox,oy,bx,by,bw,bh}
+const HANDLE=22; // px hit radius on canvas display
+
 function handleFile(e){
   const f=e.target.files[0];if(!f)return;
-  // Zablokuj przycisk skanowania do czasu zakończenia kompresji
   document.getElementById('btn-scan').style.display='none';
   document.getElementById('result-box').style.display='none';
   document.getElementById('btn-dl').style.display='none';
-  curFile=null;
+  document.getElementById('prev-img').style.display='none';
+  curFile=null;cropRotDeg=0;
 
   const img=new Image();
   const url=URL.createObjectURL(f);
   img.onload=()=>{
     URL.revokeObjectURL(url);
-    const MAX=1200;
-    let w=img.width,h=img.height;
-    if(w>MAX||h>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
-    const canvas=document.createElement('canvas');
-    canvas.width=w;canvas.height=h;
-    canvas.getContext('2d').drawImage(img,0,0,w,h);
-    canvas.toBlob(blob=>{
-      // curFile ustawiony dopiero po kompresji — doScan bezpieczny
-      curFile=new File([blob],'paragon.jpg',{type:'image/jpeg'});
-      const sizeMB=(curFile.size/1024/1024).toFixed(2);
-      document.getElementById('prev-img').src=URL.createObjectURL(curFile);
-      document.getElementById('prev-img').style.display='block';
-      document.getElementById('btn-scan').style.display='block';
-      toast(`Gotowe · ${sizeMB} MB`,'ok');
-    },'image/jpeg',0.75);
+    cropImg=img;
+    cropBox={x:0.05,y:0.05,w:0.90,h:0.90};
+    document.getElementById('crop-box').style.display='block';
+    initCropCanvas();
+    toast('Przeciągnij rogi żeby przyciąć','ok');
   };
-  img.onerror=()=>{toast('Błąd wczytywania zdjęcia','err');};
+  img.onerror=()=>{toast('Błąd wczytywania','err');};
   img.src=url;
+}
+
+function initCropCanvas(){
+  const canvas=document.getElementById('crop-canvas');
+  const wrap=document.getElementById('crop-canvas-wrap');
+  const MAX_W=wrap.clientWidth||340;
+  const MAX_H=Math.round(MAX_W*1.6);
+  // Uwzględnij obrót przy wymiarach
+  const rotated=cropRotDeg%180!==0;
+  const srcW=rotated?cropImg.naturalHeight:cropImg.naturalWidth;
+  const srcH=rotated?cropImg.naturalWidth:cropImg.naturalHeight;
+  const scale=Math.min(MAX_W/srcW, MAX_H/srcH,1);
+  canvas.width=Math.round(srcW*scale);
+  canvas.height=Math.round(srcH*scale);
+  canvas.style.width=canvas.width+'px';
+  canvas.style.height=canvas.height+'px';
+  drawCrop();
+  attachCropEvents(canvas);
+}
+
+function drawCrop(){
+  const canvas=document.getElementById('crop-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  // Draw image with rotation
+  ctx.save();
+  ctx.translate(W/2,H/2);
+  ctx.rotate(cropRotDeg*Math.PI/180);
+  const rotated=cropRotDeg%180!==0;
+  const dw=rotated?H:W, dh=rotated?W:H;
+  ctx.drawImage(cropImg,-dw/2,-dh/2,dw,dh);
+  ctx.restore();
+  // Overlay
+  const bx=cropBox.x*W,by=cropBox.y*H,bw=cropBox.w*W,bh=cropBox.h*H;
+  ctx.fillStyle='rgba(0,0,0,0.48)';
+  ctx.fillRect(0,0,W,by);
+  ctx.fillRect(0,by+bh,W,H-by-bh);
+  ctx.fillRect(0,by,bx,bh);
+  ctx.fillRect(bx+bw,by,W-bx-bw,bh);
+  // Border
+  ctx.strokeStyle='#f0b830';ctx.lineWidth=2;
+  ctx.strokeRect(bx,by,bw,bh);
+  // Grid lines (rule of thirds)
+  ctx.strokeStyle='rgba(240,184,48,0.3)';ctx.lineWidth=1;
+  [1/3,2/3].forEach(t=>{
+    ctx.beginPath();ctx.moveTo(bx+bw*t,by);ctx.lineTo(bx+bw*t,by+bh);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(bx,by+bh*t);ctx.lineTo(bx+bw,by+bh*t);ctx.stroke();
+  });
+  // Corner handles
+  const corners=[[bx,by],[bx+bw,by],[bx,by+bh],[bx+bw,by+bh]];
+  corners.forEach(([cx,cy])=>{
+    ctx.fillStyle='#f0b830';
+    ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+  });
+}
+
+function getCanvasPos(canvas,e){
+  const r=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/r.width;
+  const scaleY=canvas.height/r.height;
+  const src=e.touches?e.touches[0]:e;
+  return{x:(src.clientX-r.left)*scaleX, y:(src.clientY-r.top)*scaleY};
+}
+
+function attachCropEvents(canvas){
+  // Remove old listeners by cloning
+  const nc=canvas.cloneNode(true);
+  canvas.parentNode.replaceChild(nc,canvas);
+  const c=document.getElementById('crop-canvas');
+
+  function onStart(e){
+    e.preventDefault();
+    const {x,y}=getCanvasPos(c,e);
+    const W=c.width,H=c.height;
+    const bx=cropBox.x*W,by=cropBox.y*H,bw=cropBox.w*W,bh=cropBox.h*H;
+    const corners={tl:[bx,by],tr:[bx+bw,by],bl:[bx,by+bh],br:[bx+bw,by+bh]};
+    // Check corners first
+    for(const[name,[cx,cy]] of Object.entries(corners)){
+      if(Math.hypot(x-cx,y-cy)<HANDLE){
+        cropDrag={type:'corner',corner:name,ox:x,oy:y,bx:cropBox.x,by:cropBox.y,bw:cropBox.w,bh:cropBox.h};
+        return;
+      }
+    }
+    // Check body (inside box)
+    if(x>=bx&&x<=bx+bw&&y>=by&&y<=by+bh){
+      cropDrag={type:'body',ox:x,oy:y,bx:cropBox.x,by:cropBox.y,bw:cropBox.w,bh:cropBox.h};
+    }
+  }
+
+  function onMove(e){
+    if(!cropDrag)return;
+    e.preventDefault();
+    const {x,y}=getCanvasPos(c,e);
+    const W=c.width,H=c.height;
+    const dx=(x-cropDrag.ox)/W, dy=(y-cropDrag.oy)/H;
+    const MIN=0.05;
+    if(cropDrag.type==='body'){
+      let nx=cropDrag.bx+dx, ny=cropDrag.by+dy;
+      nx=Math.max(0,Math.min(1-cropDrag.bw,nx));
+      ny=Math.max(0,Math.min(1-cropDrag.bh,ny));
+      cropBox={...cropBox,x:nx,y:ny};
+    } else {
+      let {bx,by,bw,bh}=cropDrag;
+      switch(cropDrag.corner){
+        case'tl':
+          {const nx=Math.min(bx+bw-MIN,Math.max(0,bx+dx));
+          const ny=Math.min(by+bh-MIN,Math.max(0,by+dy));
+          cropBox={x:nx,y:ny,w:bw+(bx-nx),h:bh+(by-ny)};}break;
+        case'tr':
+          {const ny=Math.min(by+bh-MIN,Math.max(0,by+dy));
+          const nw=Math.max(MIN,Math.min(1-bx,bw+dx));
+          cropBox={x:bx,y:ny,w:nw,h:bh+(by-ny)};}break;
+        case'bl':
+          {const nx=Math.min(bx+bw-MIN,Math.max(0,bx+dx));
+          const nh=Math.max(MIN,Math.min(1-by,bh+dy));
+          cropBox={x:nx,y:by,w:bw+(bx-nx),h:nh};}break;
+        case'br':
+          {const nw=Math.max(MIN,Math.min(1-bx,bw+dx));
+          const nh=Math.max(MIN,Math.min(1-by,bh+dy));
+          cropBox={x:bx,y:by,w:nw,h:nh};}break;
+      }
+    }
+    drawCrop();
+  }
+
+  function onEnd(){cropDrag=null;}
+
+  c.addEventListener('mousedown',onStart);
+  c.addEventListener('mousemove',onMove);
+  c.addEventListener('mouseup',onEnd);
+  c.addEventListener('touchstart',onStart,{passive:false});
+  c.addEventListener('touchmove',onMove,{passive:false});
+  c.addEventListener('touchend',onEnd);
+}
+
+function cropReset(){
+  cropBox={x:0.05,y:0.05,w:0.90,h:0.90};
+  drawCrop();
+}
+
+function cropRotate(){
+  cropRotDeg=(cropRotDeg+90)%360;
+  cropBox={x:0.05,y:0.05,w:0.90,h:0.90};
+  initCropCanvas();
+}
+
+function applyCrop(){
+  // Render final cropped image to a new canvas at full res
+  const rotated=cropRotDeg%180!==0;
+  const srcW=rotated?cropImg.naturalHeight:cropImg.naturalWidth;
+  const srcH=rotated?cropImg.naturalWidth:cropImg.naturalHeight;
+  const MAX=1600;
+  const scale=Math.min(MAX/srcW,MAX/srcH,1);
+  const fullW=Math.round(srcW*scale);
+  const fullH=Math.round(srcH*scale);
+
+  // First draw rotated full image
+  const tmp=document.createElement('canvas');
+  tmp.width=fullW;tmp.height=fullH;
+  const tc=tmp.getContext('2d');
+  tc.save();tc.translate(fullW/2,fullH/2);tc.rotate(cropRotDeg*Math.PI/180);
+  const dw=rotated?fullH:fullW,dh=rotated?fullW:fullH;
+  tc.drawImage(cropImg,-dw/2,-dh/2,dw,dh);
+  tc.restore();
+
+  // Crop region
+  const cx=Math.round(cropBox.x*fullW);
+  const cy=Math.round(cropBox.y*fullH);
+  const cw=Math.round(cropBox.w*fullW);
+  const ch=Math.round(cropBox.h*fullH);
+  const out=document.createElement('canvas');
+  out.width=cw;out.height=ch;
+  out.getContext('2d').drawImage(tmp,cx,cy,cw,ch,0,0,cw,ch);
+
+  out.toBlob(blob=>{
+    curFile=new File([blob],'paragon.jpg',{type:'image/jpeg'});
+    finishFileLoad();
+  },'image/jpeg',0.82);
+}
+
+function skipCrop(){
+  // Tylko obrót, bez crop
+  if(cropRotDeg===0){
+    // Kompresuj oryginał
+    const MAX=1200;
+    let w=cropImg.naturalWidth,h=cropImg.naturalHeight;
+    if(w>MAX||h>MAX){const s=MAX/Math.max(w,h);w=Math.round(w*s);h=Math.round(h*s);}
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+    cv.getContext('2d').drawImage(cropImg,0,0,w,h);
+    cv.toBlob(blob=>{curFile=new File([blob],'paragon.jpg',{type:'image/jpeg'});finishFileLoad();},'image/jpeg',0.75);
+  } else {
+    // Zastosuj tylko obrót
+    cropBox={x:0,y:0,w:1,h:1};
+    applyCrop();
+  }
+}
+
+function finishFileLoad(){
+  const sizeMB=(curFile.size/1024/1024).toFixed(2);
+  document.getElementById('crop-box').style.display='none';
+  document.getElementById('prev-img').src=URL.createObjectURL(curFile);
+  document.getElementById('prev-img').style.display='block';
+  document.getElementById('btn-scan').style.display='block';
+  toast(`Gotowe · ${sizeMB} MB`,'ok');
 }
 
 async function doScan(){
@@ -1180,6 +1444,7 @@ function saveReceipt(force=false){
   document.getElementById('dup-warn').classList.remove('on');
   document.getElementById('btn-ok-force').style.display='none';
   document.getElementById('btn-ok-save').style.display='block';
+  document.getElementById('crop-box').style.display='none';
   document.getElementById('eur-chk').checked=false;
   document.getElementById('eur-fields').style.display='none';
   document.getElementById('eur-amt').value='';
@@ -1273,6 +1538,121 @@ function renderFirma(){
       <div class="firma-val">−${fmt(f.amount)}</div>
       <button class="firma-del" onclick="delFirma(${f.id},event)">🗑️</button>
     </div>`).join('');
+}
+
+function renderSklepy(){
+  const m=curMonth;
+  const el=document.getElementById('sklepy-list');
+  const recs=receipts.filter(r=>r.data.startsWith(m));
+  if(!recs.length){
+    document.getElementById('sklepy-period').textContent='';
+    el.innerHTML='<div class="empty"><span class="empty-ico">🛒</span>Brak paragonów w tym miesiącu.</div>';
+    return;
+  }
+  document.getElementById('sklepy-period').textContent=`📅 ${fmtMonth(m)} · ${recs.length} paragon${recs.length===1?'':'ów'}`;
+
+  // Grupuj po sklepie (case-insensitive)
+  const map={};
+  recs.forEach(r=>{
+    const key=(r.sklep||'Nieznany').trim();
+    const kl=key.toLowerCase();
+    // Znajdź istniejący klucz (case-insensitive match)
+    const existing=Object.keys(map).find(k=>k.toLowerCase()===kl)||key;
+    if(!map[existing])map[existing]={name:existing,total:0,count:0,wizyty:[],osoby:{}};
+    map[existing].total+=r.suma;
+    map[existing].count++;
+    map[existing].wizyty.push(r);
+    const pi=r.person??0;
+    const pn=pi===2?'Wspólne':(names[pi]||names[0]);
+    map[existing].osoby[pn]=(map[existing].osoby[pn]||0)+r.suma;
+  });
+
+  const sorted=Object.values(map).sort((a,b)=>b.total-a.total);
+  const maxTotal=sorted[0]?.total||1;
+  const grandTotal=sorted.reduce((s,x)=>s+x.total,0);
+
+  el.innerHTML=sorted.map((s,i)=>{
+    const rank=i<3?`<span class="sklep-rank r${i+1}">${i+1}</span>`:`<span class="sklep-rank">${i+1}</span>`;
+    const pct=grandTotal>0?Math.round(s.total/grandTotal*100):0;
+    const barW=(s.total/maxTotal*100).toFixed(1);
+    const osobyStr=Object.entries(s.osoby).map(([n,v])=>`${n}: ${fmt(v)}`).join(' · ');
+    const eurCount=s.wizyty.filter(r=>r.waluta==='EUR').length;
+    const eurChip=eurCount?`<span class="sklep-chip">💶 ${eurCount}× EUR</span>`:'';
+    return`<div class="sklep-card" onclick="openSklepDrill('${s.name.replace(/'/g,"\\'")}')">
+      <div class="sklep-top">
+        <div class="sklep-name">${rank} ${s.name}</div>
+        <div class="sklep-total">${fmt(s.total)}</div>
+      </div>
+      <div class="sklep-bar-wrap"><div class="sklep-bar-fill" style="width:${barW}%"></div></div>
+      <div class="sklep-meta">
+        <span class="sklep-chip vis">${pct}% wydatków</span>
+        <span class="sklep-chip">${s.count} wizyt${s.count===1?'a':s.count<5?'y':'</span><span class="sklep-chip">'}</span>
+        <span class="sklep-chip">${osobyStr}</span>
+        ${eurChip}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openSklepDrill(name){
+  const m=curMonth;
+  const wizyty=receipts.filter(r=>r.data.startsWith(m)&&(r.sklep||'').trim().toLowerCase()===name.toLowerCase())
+    .sort((a,b)=>b.data.localeCompare(a.data));
+  const total=wizyty.reduce((s,r)=>s+r.suma,0);
+  const avgWizyta=wizyty.length?total/wizyty.length:0;
+
+  // Top produkty z tego sklepu
+  const prodMap={};
+  wizyty.forEach(r=>(r.produkty||[]).forEach(p=>{
+    const k=p.nazwa||'?';
+    if(!prodMap[k])prodMap[k]={nazwa:k,total:0,count:0,kat:p.kategoria||'Inne'};
+    prodMap[k].total+=parseFloat(p.suma||p.cena_jednostkowa||0);
+    prodMap[k].count++;
+  }));
+  const topProd=Object.values(prodMap).sort((a,b)=>b.total-a.total).slice(0,8);
+
+  let html=`<div class="sh-handle"></div>
+    <div class="sh-title">🛒 ${name}</div>
+    <div class="sh-meta" style="margin-bottom:14px;">
+      <span>${fmtMonth(m)}</span>
+      <span>${wizyty.length} wizyt${wizyty.length===1?'a':wizyty.length<5?'y':''}</span>
+      <span>śr. ${fmt(avgWizyta)}/wizytę</span>
+    </div>`;
+
+  // Wizyty
+  html+=`<div style="font-size:10px;color:var(--ink2);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:8px;">Wizyty</div>`;
+  html+=wizyty.map(r=>{
+    const {pn,pc}=pTag(r.person);
+    const eurBadge=r.waluta==='EUR'?`<span class="eur-badge">💶</span>`:'';
+    return`<div class="sklep-drill-rec" onclick="closeSheet('cat-sheet');openDet(${r.id})">
+      <div class="sklep-drill-l">
+        <div class="sklep-drill-date">${r.data}${r.godzina?' · '+r.godzina:''} ${eurBadge}</div>
+        <div class="sklep-drill-meta">${(r.produkty||[]).length} poz. <span class="ptag ${pc}" style="margin-left:4px">${pn}</span></div>
+      </div>
+      <div class="sklep-drill-amt">${fmt(r.suma)}</div>
+    </div>`;
+  }).join('');
+
+  html+=`<div class="sklep-drill-total"><span>Łącznie</span><span class="sklep-drill-total-val">${fmt(total)}</span></div>`;
+
+  // Top produkty
+  if(topProd.length){
+    html+=`<div style="font-size:10px;color:var(--ink2);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin:16px 0 8px;">Najczęściej kupowane</div>`;
+    html+=topProd.map(p=>{
+      const col=COL[p.kat]||COL['Inne'];
+      return`<div style="display:flex;justify-content:space-between;align-items:center;background:var(--paper2);border-radius:9px;padding:8px 11px;margin-bottom:5px;">
+        <div>
+          <div style="font-weight:600;font-size:13px;">${p.nazwa}</div>
+          <div style="font-size:11px;color:var(--ink3);margin-top:1px;"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${col};margin-right:4px;vertical-align:middle"></span>${p.kat}${p.count>1?` · ${p.count}×`:''}</div>
+        </div>
+        <div style="font-family:var(--serif);font-size:13px;font-weight:700;color:var(--gold)">${fmt(p.total)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  html+=`<button class="btn-sh-close" style="margin-top:14px;" onclick="closeSheet('cat-sheet')">Zamknij</button>`;
+  document.getElementById('cat-pan').innerHTML=html;
+  document.getElementById('cat-sheet').classList.add('on');
 }
 
 // EUR
