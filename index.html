@@ -228,6 +228,39 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 .empty-ico{font-size:30px;display:block;margin-bottom:4px;}
 .sec-sub{font-size:12px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:10px;margin-top:4px;}
 </style>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDe4MONC_5Dvo1YfPpXmdLJp_prEzW6eNQ",
+  authDomain: "budzet-majorki.firebaseapp.com",
+  projectId: "budzet-majorki",
+  storageBucket: "budzet-majorki.firebasestorage.app",
+  messagingSenderId: "426780224472",
+  appId: "1:426780224472:web:b7f2e06a878ae808dfa0ad"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const FAMILY_ID = "majorki";
+
+async function syncToCloud(key, data) {
+  try {
+    await setDoc(doc(db, "budzet", FAMILY_ID, "data", key), { value: JSON.stringify(data), updated: Date.now() });
+  } catch(e) { console.log("Sync error:", e); }
+}
+
+async function loadFromCloud(key, def) {
+  try {
+    const snap = await getDoc(doc(db, "budzet", FAMILY_ID, "data", key));
+    if (snap.exists()) return JSON.parse(snap.data().value);
+  } catch(e) { console.log("Load error:", e); }
+  return def;
+}
+
+window.FIREBASE = { syncToCloud, loadFromCloud, db, FAMILY_ID };
+</script>
 </head>
 <body>
 
@@ -611,13 +644,30 @@ function startChangePin(){
 }
 
 // ── INIT ──
-window.onload=()=>{
+window.onload=async()=>{
   initPin();
   const t=new Date();
   const today=t.toISOString().split('T')[0];
   document.getElementById('inc-date').value=today;
   document.getElementById('med-date').value=today;
   document.getElementById('evt-date').value=today;
+  // Załaduj dane z Firebase (jeśli dostępne) lub z localStorage
+  if(window.FIREBASE){
+    try{
+      const [r,i,m,e,n,p]=await Promise.all([
+        window.FIREBASE.loadFromCloud('receipts',[]),
+        window.FIREBASE.loadFromCloud('incomes',[]),
+        window.FIREBASE.loadFromCloud('media',[]),
+        window.FIREBASE.loadFromCloud('events',[]),
+        window.FIREBASE.loadFromCloud('names',['Stanisław','Agnieszka']),
+        window.FIREBASE.loadFromCloud('periodDay',1)
+      ]);
+      receipts=r;incomes=i;media=m;events=e;
+      DB.set('names',n);DB.set('periodDay',p);
+      // Nasłuchuj zmian w czasie rzeczywistym
+      const {onSnapshot,collection,doc,getFirestore}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    }catch(err){console.log('Firebase load error:',err);}
+  }
   applyNames();
   buildMonthBar();
   if(!DB.get('api_key',''))document.getElementById('api-p').classList.add('on');
@@ -813,7 +863,9 @@ function addMedia(){
   const date=document.getElementById('med-date').value;
   if(!amt||amt<=0){toast('Podaj kwotę!','err');return;}
   media.unshift({id:Date.now(),type:document.getElementById('med-type').value,amount:amt,date,person:parseInt(document.getElementById('med-p').value)});
-  DB.set('media',media);document.getElementById('med-amt').value='';
+  DB.set('media',media);
+  if(window.FIREBASE)window.FIREBASE.syncToCloud('media',media);
+  document.getElementById('med-amt').value='';
   buildMonthBar();renderAll();toast('Dodano ✓','ok');
 }
 function addEvent(){
@@ -822,7 +874,9 @@ function addEvent(){
   const desc=document.getElementById('evt-desc').value.trim()||'Wyjście';
   if(!amt||amt<=0){toast('Podaj kwotę!','err');return;}
   events.unshift({id:Date.now(),desc,amount:amt,data:date,person:parseInt(document.getElementById('evt-p').value)});
-  DB.set('events',events);document.getElementById('evt-amt').value='';document.getElementById('evt-desc').value='';
+  DB.set('events',events);
+  if(window.FIREBASE)window.FIREBASE.syncToCloud('events',events);
+  document.getElementById('evt-amt').value='';document.getElementById('evt-desc').value='';
   buildMonthBar();renderAll();toast('Dodano ✓','ok');
 }
 function addIncome(){
@@ -832,7 +886,9 @@ function addIncome(){
   if(!amt||amt<=0){toast('Podaj kwotę!','err');return;}
   if(!date){toast('Podaj datę!','err');return;}
   incomes.unshift({id:Date.now(),amount:amt,date,source:src,person:parseInt(document.getElementById('inc-p').value)});
-  DB.set('incomes',incomes);document.getElementById('inc-amt').value='';
+  DB.set('incomes',incomes);
+  if(window.FIREBASE)window.FIREBASE.syncToCloud('incomes',incomes);
+  document.getElementById('inc-amt').value='';
   buildMonthBar();renderAll();toast('Dodano ✓','ok');
 }
 
