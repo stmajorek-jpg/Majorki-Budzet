@@ -227,40 +227,32 @@ canvas#pie{max-width:188px;max-height:188px;margin:0 auto 14px;display:block;}
 .empty{text-align:center;padding:36px 20px;color:var(--ink3);font-size:13px;font-weight:500;line-height:2.2;}
 .empty-ico{font-size:30px;display:block;margin-bottom:4px;}
 .sec-sub{font-size:12px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:10px;margin-top:4px;}
+
+/* ── SEARCH ── */
+.srch-bar{background:var(--ink);padding:0 16px 12px;display:flex;gap:8px;align-items:center;}
+.srch-wrap{flex:1;position:relative;display:flex;align-items:center;}
+.srch-ico{position:absolute;left:11px;font-size:15px;pointer-events:none;color:rgba(255,255,255,0.4);}
+.srch-inp{width:100%;background:rgba(255,255,255,0.09);border:1.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:9px 12px 9px 34px;color:#fff;font-family:var(--font);font-size:14px;font-weight:500;outline:none;transition:all 0.2s;}
+.srch-inp::placeholder{color:rgba(255,255,255,0.35);}
+.srch-inp:focus{border-color:var(--gold2);background:rgba(255,255,255,0.13);}
+.srch-clear{background:none;border:none;color:rgba(255,255,255,0.4);font-size:18px;cursor:pointer;padding:2px 6px;line-height:1;display:none;}
+.srch-clear.vis{display:block;}
+
+/* Search results overlay */
+.srch-results{display:none;padding:0 16px 16px;}
+.srch-results.on{display:block;}
+.srch-count{font-size:11px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:0.09em;margin-bottom:10px;padding-top:4px;}
+.srch-item{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin-bottom:8px;cursor:pointer;box-shadow:var(--sh);transition:all 0.15s;}
+.srch-item:active{transform:scale(0.98);}
+.srch-item-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;}
+.srch-item-name{font-weight:600;font-size:14px;}
+.srch-item-amt{font-family:var(--serif);font-size:14px;color:var(--gold);}
+.srch-item-meta{font-size:11px;color:var(--ink3);font-weight:500;}
+.srch-item-sub{font-size:11px;color:var(--ink2);margin-top:4px;line-height:1.5;}
+.srch-hl{background:rgba(240,184,48,0.25);color:var(--ink);border-radius:3px;padding:0 2px;}
+.srch-empty{text-align:center;padding:32px 20px;color:var(--ink3);font-size:13px;font-weight:500;line-height:2;}
+.srch-empty-ico{font-size:28px;display:block;margin-bottom:4px;}
 </style>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDe4MONC_5Dvo1YfPpXmdLJp_prEzW6eNQ",
-  authDomain: "budzet-majorki.firebaseapp.com",
-  projectId: "budzet-majorki",
-  storageBucket: "budzet-majorki.firebasestorage.app",
-  messagingSenderId: "426780224472",
-  appId: "1:426780224472:web:b7f2e06a878ae808dfa0ad"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const FAMILY_ID = "majorki";
-
-async function syncToCloud(key, data) {
-  try {
-    await setDoc(doc(db, "budzet", FAMILY_ID, "data", key), { value: JSON.stringify(data), updated: Date.now() });
-  } catch(e) { console.log("Sync error:", e); }
-}
-
-async function loadFromCloud(key, def) {
-  try {
-    const snap = await getDoc(doc(db, "budzet", FAMILY_ID, "data", key));
-    if (snap.exists()) return JSON.parse(snap.data().value);
-  } catch(e) { console.log("Load error:", e); }
-  return def;
-}
-
-window.FIREBASE = { syncToCloud, loadFromCloud, db, FAMILY_ID };
-</script>
 </head>
 <body>
 
@@ -302,6 +294,21 @@ window.FIREBASE = { syncToCloud, loadFromCloud, db, FAMILY_ID };
 </div>
 
 <div class="month-bar" id="month-bar"></div>
+
+<!-- SEARCH BAR -->
+<div class="srch-bar">
+  <div class="srch-wrap">
+    <span class="srch-ico">🔍</span>
+    <input class="srch-inp" id="srch-inp" type="text" placeholder="Szukaj sklepu, produktu..." oninput="doSearch(this.value)" autocomplete="off" autocorrect="off">
+  </div>
+  <button class="srch-clear" id="srch-clear" onclick="clearSearch()">✕</button>
+</div>
+
+<!-- SEARCH RESULTS (shown over main content when searching) -->
+<div class="srch-results" id="srch-results">
+  <div class="srch-count" id="srch-count"></div>
+  <div id="srch-list"></div>
+</div>
 
 <div class="hero">
   <div class="hero-lbl">Wydatki</div>
@@ -651,23 +658,6 @@ window.onload=async()=>{
   document.getElementById('inc-date').value=today;
   document.getElementById('med-date').value=today;
   document.getElementById('evt-date').value=today;
-  // Załaduj dane z Firebase (jeśli dostępne) lub z localStorage
-  if(window.FIREBASE){
-    try{
-      const [r,i,m,e,n,p]=await Promise.all([
-        window.FIREBASE.loadFromCloud('receipts',[]),
-        window.FIREBASE.loadFromCloud('incomes',[]),
-        window.FIREBASE.loadFromCloud('media',[]),
-        window.FIREBASE.loadFromCloud('events',[]),
-        window.FIREBASE.loadFromCloud('names',['Stanisław','Agnieszka']),
-        window.FIREBASE.loadFromCloud('periodDay',1)
-      ]);
-      receipts=r;incomes=i;media=m;events=e;
-      DB.set('names',n);DB.set('periodDay',p);
-      // Nasłuchuj zmian w czasie rzeczywistym
-      const {onSnapshot,collection,doc,getFirestore}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-    }catch(err){console.log('Firebase load error:',err);}
-  }
   applyNames();
   buildMonthBar();
   if(!DB.get('api_key',''))document.getElementById('api-p').classList.add('on');
@@ -864,7 +854,6 @@ function addMedia(){
   if(!amt||amt<=0){toast('Podaj kwotę!','err');return;}
   media.unshift({id:Date.now(),type:document.getElementById('med-type').value,amount:amt,date,person:parseInt(document.getElementById('med-p').value)});
   DB.set('media',media);
-  if(window.FIREBASE)window.FIREBASE.syncToCloud('media',media);
   document.getElementById('med-amt').value='';
   buildMonthBar();renderAll();toast('Dodano ✓','ok');
 }
@@ -875,7 +864,6 @@ function addEvent(){
   if(!amt||amt<=0){toast('Podaj kwotę!','err');return;}
   events.unshift({id:Date.now(),desc,amount:amt,data:date,person:parseInt(document.getElementById('evt-p').value)});
   DB.set('events',events);
-  if(window.FIREBASE)window.FIREBASE.syncToCloud('events',events);
   document.getElementById('evt-amt').value='';document.getElementById('evt-desc').value='';
   buildMonthBar();renderAll();toast('Dodano ✓','ok');
 }
@@ -887,7 +875,6 @@ function addIncome(){
   if(!date){toast('Podaj datę!','err');return;}
   incomes.unshift({id:Date.now(),amount:amt,date,source:src,person:parseInt(document.getElementById('inc-p').value)});
   DB.set('incomes',incomes);
-  if(window.FIREBASE)window.FIREBASE.syncToCloud('incomes',incomes);
   document.getElementById('inc-amt').value='';
   buildMonthBar();renderAll();toast('Dodano ✓','ok');
 }
@@ -1042,6 +1029,114 @@ function exportXlsx(){
 function fmt(n){return parseFloat(n||0).toLocaleString('pl-PL',{minimumFractionDigits:2,maximumFractionDigits:2})+' zł';}
 function toB64(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(f);});}
 function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast '+(type==='ok'?'ok':type==='err'?'err':'')+' on';setTimeout(()=>t.classList.remove('on'),2600);}
+
+// ── SEARCH ──
+let searchActive=false;
+
+function doSearch(q){
+  q=q.trim();
+  const clearBtn=document.getElementById('srch-clear');
+  const resultsDiv=document.getElementById('srch-results');
+
+  if(!q){
+    clearSearch();
+    return;
+  }
+
+  clearBtn.classList.add('vis');
+  resultsDiv.classList.add('on');
+  // Ukryj główną zawartość (tylko aktywną sekcję + hero/prow/nav)
+  document.querySelector('.hero').style.display='none';
+  document.querySelector('.prow').style.display='none';
+  document.querySelector('.nav').style.display='none';
+  document.querySelectorAll('.sec.active').forEach(el=>el.style.display='none');
+  searchActive=true;
+
+  const ql=q.toLowerCase();
+
+  function hl(str){
+    if(!str)return '';
+    const idx=str.toLowerCase().indexOf(ql);
+    if(idx<0)return str;
+    return str.slice(0,idx)+'<span class="srch-hl">'+str.slice(idx,idx+ql.length)+'</span>'+str.slice(idx+ql.length);
+  }
+
+  const results=[];
+
+  // Paragony — sklep match
+  receipts.forEach(r=>{
+    const shopMatch=r.sklep&&r.sklep.toLowerCase().includes(ql);
+    const matchedProds=(r.produkty||[]).filter(p=>p.nazwa&&p.nazwa.toLowerCase().includes(ql));
+    if(shopMatch||matchedProds.length){
+      results.push({
+        id:r.id,
+        icon:'🧾',
+        name:r.sklep,
+        amt:r.suma,
+        meta:r.data+(r.godzina?' · '+r.godzina:''),
+        sub:shopMatch
+          ?(matchedProds.length?matchedProds.map(p=>hl(p.nazwa)).join(', '):'')
+          :matchedProds.map(p=>hl(p.nazwa)).join(', '),
+        nameHl:shopMatch?hl(r.sklep):r.sklep,
+        person:r.person??0,
+        onClick:`openDet(${r.id})`
+      });
+    }
+  });
+
+  // Rachunki
+  media.forEach(x=>{
+    if(x.type&&x.type.toLowerCase().includes(ql)){
+      results.push({id:x.id,icon:'🏠',name:x.type,amt:x.amount,meta:x.date,sub:'',nameHl:hl(x.type),person:x.person??0,onClick:`openDet(${x.id})`});
+    }
+  });
+
+  // Wyjścia
+  events.forEach(x=>{
+    if(x.desc&&x.desc.toLowerCase().includes(ql)){
+      results.push({id:x.id,icon:'🎉',name:x.desc,amt:x.amount,meta:x.data,sub:'',nameHl:hl(x.desc),person:x.person??0,onClick:`openDet(${x.id})`});
+    }
+  });
+
+  // Sort by date desc (newest first)
+  results.sort((a,b)=>b.meta.localeCompare(a.meta));
+
+  if(!results.length){
+    document.getElementById('srch-count').textContent='';
+    document.getElementById('srch-list').innerHTML=`<div class="srch-empty"><span class="srch-empty-ico">🔍</span>Brak wyników dla „${q}"</div>`;
+    return;
+  }
+
+  const total=results.reduce((s,r)=>s+(r.amt||0),0);
+  const suf=results.length===1?'':results.length<5?'i':'ów';
+  document.getElementById('srch-count').textContent=
+    `${results.length} wynik${suf} · łącznie ${fmt(total)}`;
+
+  document.getElementById('srch-list').innerHTML=results.map(r=>{
+    const pn=names[r.person??0];const pc=(r.person??0)===1?'p1':'p0';
+    return`<div class="srch-item" onclick="${r.onClick}">
+      <div class="srch-item-top">
+        <div class="srch-item-name">${r.icon} ${r.nameHl}</div>
+        <div class="srch-item-amt">${fmt(r.amt)}</div>
+      </div>
+      <div class="srch-item-meta">${r.meta} <span class="ptag ${pc}">${pn}</span></div>
+      ${r.sub?`<div class="srch-item-sub">${r.sub}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function clearSearch(){
+  document.getElementById('srch-inp').value='';
+  document.getElementById('srch-clear').classList.remove('vis');
+  document.getElementById('srch-results').classList.remove('on');
+  // Przywróć display elementów które ukryliśmy inline
+  document.querySelector('.hero').style.display='';
+  document.querySelector('.prow').style.display='';
+  document.querySelector('.nav').style.display='';
+  // Przywróć aktywną sekcję (CSS rządzi display przez .active)
+  document.querySelectorAll('.sec').forEach(el=>el.style.display='');
+  searchActive=false;
+}
 
 // Service Worker registration
 if('serviceWorker' in navigator){
