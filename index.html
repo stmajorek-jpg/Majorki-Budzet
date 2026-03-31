@@ -800,7 +800,12 @@ function selP(i){curP=i;document.getElementById('pb0').classList.toggle('on',i==
 
 function handleFile(e){
   const f=e.target.files[0];if(!f)return;
-  // Kompresja zdjęcia przed skanowaniem (max 1600px, jakość 0.82)
+  // Zablokuj przycisk skanowania do czasu zakończenia kompresji
+  document.getElementById('btn-scan').style.display='none';
+  document.getElementById('result-box').style.display='none';
+  document.getElementById('btn-dl').style.display='none';
+  curFile=null;
+
   const img=new Image();
   const url=URL.createObjectURL(f);
   img.onload=()=>{
@@ -812,16 +817,16 @@ function handleFile(e){
     canvas.width=w;canvas.height=h;
     canvas.getContext('2d').drawImage(img,0,0,w,h);
     canvas.toBlob(blob=>{
+      // curFile ustawiony dopiero po kompresji — doScan bezpieczny
       curFile=new File([blob],'paragon.jpg',{type:'image/jpeg'});
       const sizeMB=(curFile.size/1024/1024).toFixed(2);
       document.getElementById('prev-img').src=URL.createObjectURL(curFile);
       document.getElementById('prev-img').style.display='block';
       document.getElementById('btn-scan').style.display='block';
-      document.getElementById('result-box').style.display='none';
-      document.getElementById('btn-dl').style.display='none';
-      toast(`Zdjęcie gotowe (${sizeMB} MB)`,'ok');
+      toast(`Gotowe · ${sizeMB} MB`,'ok');
     },'image/jpeg',0.82);
   };
+  img.onerror=()=>{toast('Błąd wczytywania zdjęcia','err');};
   img.src=url;
 }
 
