@@ -541,14 +541,10 @@ margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;bo
         </label>
       </div>
       <div class="eur-fields" id="eur-fields" style="display:none">
-        <div class="f2" style="margin-top:8px;">
+        <div style="margin-top:8px;">
           <div class="frow">
-            <div class="flbl">Kwota EUR</div>
-            <input class="finp" type="number" id="eur-amt" placeholder="24.99" step="0.01" oninput="calcEur()">
-          </div>
-          <div class="frow">
-            <div class="flbl">Kurs EUR/PLN</div>
-            <input class="finp" type="number" id="eur-rate" placeholder="4.28" step="0.0001" oninput="calcEur()">
+            <div class="flbl">Kurs EUR/PLN (wpisz kurs z tego dnia)</div>
+            <input class="finp" type="number" id="eur-rate" placeholder="np. 4.28" step="0.0001" oninput="calcEur()">
           </div>
         </div>
         <div class="eur-result" id="eur-result"></div>
@@ -574,7 +570,10 @@ margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;bo
     </div>
     <button class="btn-dl" id="btn-dl" onclick="saveImg()">💾 Zapisz zdjęcie na telefon</button>
     <button class="btn-ok" id="btn-ok-save" onclick="saveReceipt()">✓ Zapisz paragon</button>
-    <button class="btn-ok btn-ok-force" id="btn-ok-force" onclick="saveReceipt(true)" style="display:none;background:#c0242a;">⚠️ Zapisz mimo to (duplikat)</button>
+    <div id="dup-btns" style="display:none;gap:8px;flex-direction:column;">
+      <button class="btn-ok" style="background:#c0242a;" onclick="saveReceipt(true)">⚠️ Zapisz mimo to (duplikat)</button>
+      <button class="btn-ok" style="background:var(--paper2);color:var(--ink2);border:1.5px solid var(--line);" onclick="cancelDup()">✕ Anuluj</button>
+    </div>
   </div>
 </div>
 
@@ -1369,7 +1368,7 @@ function showResult(d){
   }
   // Reset dup warning
   document.getElementById('dup-warn').classList.remove('on');
-  document.getElementById('btn-ok-force').style.display='none';
+  document.getElementById('dup-btns').style.display='none';
   document.getElementById('btn-ok-save').style.display='block';
   document.getElementById('result-box').style.display='block';
 }
@@ -1419,15 +1418,14 @@ function saveReceipt(force=false){
       document.getElementById('dup-warn-detail').textContent=`Już masz paragon: ${dup.sklep}, ${dupDate}, ${dupSuma}, nr ${dupNum}`;
       document.getElementById('dup-warn').classList.add('on');
       document.getElementById('btn-ok-save').style.display='none';
-      document.getElementById('btn-ok-force').style.display='block';
+      document.getElementById('dup-btns').style.display='flex';
       toast('Wykryto duplikat!','err');
       return;
     }
   }
 
-  // Zbierz dane EUR
   const eurOn=document.getElementById('eur-chk').checked;
-  const eurAmt=eurOn?parseFloat(document.getElementById('eur-amt').value)||null:null;
+  const eurAmt=eurOn?(parseFloat(window._pend?.suma)||null):null;
   const eurRate=eurOn?parseFloat(document.getElementById('eur-rate').value)||null:null;
   const sumaEurPLN=(eurOn&&eurAmt&&eurRate)?parseFloat((eurAmt*eurRate).toFixed(2)):null;
 
@@ -1442,12 +1440,11 @@ function saveReceipt(force=false){
   document.getElementById('rec-num-inp').classList.remove('warn');
   document.getElementById('rec-num-warn').classList.remove('on');
   document.getElementById('dup-warn').classList.remove('on');
-  document.getElementById('btn-ok-force').style.display='none';
+  document.getElementById('dup-btns').style.display='none';
   document.getElementById('btn-ok-save').style.display='block';
   document.getElementById('crop-box').style.display='none';
   document.getElementById('eur-chk').checked=false;
   document.getElementById('eur-fields').style.display='none';
-  document.getElementById('eur-amt').value='';
   document.getElementById('eur-rate').value='';
   document.getElementById('eur-result').textContent='';
   selP(0);
@@ -1459,6 +1456,11 @@ function saveReceipt(force=false){
 }
 
 // Delete
+function cancelDup(){
+  document.getElementById('dup-warn').classList.remove('on');
+  document.getElementById('dup-btns').style.display='none';
+  document.getElementById('btn-ok-save').style.display='block';
+}
 function delR(id,e){e.stopPropagation();if(!confirm('Usunąć paragon?'))return;receipts=receipts.filter(r=>r.id!==id);DB.set('receipts',receipts);buildMonthBar();renderAll();toast('Usunięto','ok');}
 function delM(id,e){e.stopPropagation();if(!confirm('Usunąć rachunek?'))return;media=media.filter(m=>m.id!==id);DB.set('media',media);buildMonthBar();renderAll();toast('Usunięto','ok');}
 function delEv(id,e){e.stopPropagation();if(!confirm('Usunąć wpis?'))return;events=events.filter(x=>x.id!==id);DB.set('events',events);buildMonthBar();renderAll();toast('Usunięto','ok');}
@@ -1658,14 +1660,30 @@ function openSklepDrill(name){
 // EUR
 function toggleEur(on){
   document.getElementById('eur-fields').style.display=on?'block':'none';
-  if(!on){document.getElementById('eur-result').textContent='';}
+  if(on){
+    // Pokaż od razu sumę EUR z AI
+    const eurAmt=parseFloat(window._pend?.suma||0);
+    const res=document.getElementById('eur-result');
+    if(eurAmt>0) res.textContent=`Kwota: ${eurAmt.toFixed(2)} EUR — wpisz kurs żeby przeliczyć`;
+    calcEur();
+  } else {
+    // Przywróć oryginalną sumę z AI
+    if(window._pend) document.getElementById('res-total').textContent=fmt(window._pend.suma||0);
+    document.getElementById('eur-result').textContent='';
+  }
 }
 function calcEur(){
-  const amt=parseFloat(document.getElementById('eur-amt').value)||0;
+  // Suma EUR pochodzi z wyniku AI (window._pend.suma)
+  const eurAmt=parseFloat(window._pend?.suma||0);
   const rate=parseFloat(document.getElementById('eur-rate').value)||0;
   const res=document.getElementById('eur-result');
-  if(amt>0&&rate>0){
-    res.textContent=`${amt.toFixed(2)} EUR × ${rate} = ${fmt(amt*rate)}`;
+  if(eurAmt>0&&rate>0){
+    res.textContent=`${eurAmt.toFixed(2)} EUR × ${rate} = ${fmt(eurAmt*rate)}`;
+    // Zaktualizuj wyświetlaną sumę w wyniku
+    document.getElementById('res-total').textContent=fmt(eurAmt*rate);
+  } else if(eurAmt>0){
+    res.textContent=`Kwota: ${eurAmt.toFixed(2)} EUR — wpisz kurs żeby przeliczyć`;
+    document.getElementById('res-total').textContent=fmt(eurAmt);
   } else {
     res.textContent='';
   }
