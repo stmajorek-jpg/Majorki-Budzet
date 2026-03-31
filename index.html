@@ -522,6 +522,7 @@ margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;bo
       <button class="btn-crop-apply" onclick="applyCrop()">✓ Przytnij i użyj</button>
       <button class="btn-crop-skip" onclick="skipCrop()">Użyj oryginału →</button>
     </div>
+    <button style="width:100%;margin-top:6px;background:var(--paper2);border:1.5px solid var(--line);border-radius:12px;padding:11px;font-family:var(--font);font-size:13px;font-weight:600;color:var(--ink2);cursor:pointer;" onclick="cancelScan()">✕ Anuluj zdjęcie</button>
   </div>
   <img id="prev-img" alt="">
   <button class="btn-scan" id="btn-scan" onclick="doScan()">Skanuj paragon →</button>
@@ -570,6 +571,7 @@ margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;bo
     </div>
     <button class="btn-dl" id="btn-dl" onclick="saveImg()">💾 Zapisz zdjęcie na telefon</button>
     <button class="btn-ok" id="btn-ok-save" onclick="saveReceipt()">✓ Zapisz paragon</button>
+    <button class="btn-ok" style="background:var(--paper2);color:var(--ink2);border:1.5px solid var(--line);margin-top:6px;" onclick="cancelScan()">✕ Anuluj</button>
     <div id="dup-btns" style="display:none;gap:8px;flex-direction:column;">
       <button class="btn-ok" style="background:#c0242a;" onclick="saveReceipt(true)">⚠️ Zapisz mimo to (duplikat)</button>
       <button class="btn-ok" style="background:var(--paper2);color:var(--ink2);border:1.5px solid var(--line);" onclick="cancelDup()">✕ Anuluj</button>
@@ -1455,7 +1457,25 @@ function saveReceipt(force=false){
   switchTab('receipts');
 }
 
-// Delete
+function cancelScan(){
+  window._pend=null;curFile=null;
+  ['result-box','prev-img','btn-dl'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('btn-scan').style.display='none';
+  document.getElementById('file-input').value='';
+  document.getElementById('rec-num-inp').value='';
+  document.getElementById('rec-num-inp').classList.remove('warn');
+  document.getElementById('rec-num-warn').classList.remove('on');
+  document.getElementById('dup-warn').classList.remove('on');
+  document.getElementById('dup-btns').style.display='none';
+  document.getElementById('btn-ok-save').style.display='block';
+  document.getElementById('crop-box').style.display='none';
+  document.getElementById('eur-chk').checked=false;
+  document.getElementById('eur-fields').style.display='none';
+  document.getElementById('eur-rate').value='';
+  document.getElementById('eur-result').textContent='';
+  selP(0);
+  toast('Anulowano','ok');
+}
 function cancelDup(){
   document.getElementById('dup-warn').classList.remove('on');
   document.getElementById('dup-btns').style.display='none';
