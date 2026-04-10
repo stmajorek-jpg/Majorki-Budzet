@@ -346,6 +346,27 @@ margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;bo
 .btn-mclose{width:100%;background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:12px;font-family:var(--font);font-size:14px;font-weight:600;color:var(--ink2);cursor:pointer;margin-top:8px;}
 .btn-danger{width:100%;background:#fde8e8;border:1.5px solid var(--crimson);border-radius:12px;padding:12px;font-family:var(--font);font-size:14px;font-weight:600;color:var(--crimson);cursor:pointer;margin-top:8px;}
 
+/* ── DELETE MODAL ── */
+.del-modal-overlay{position:fixed;inset:0;background:rgba(26,18,8,0.55);z-index:400;display:none;align-items:flex-end;justify-content:center;}
+.del-modal-overlay.on{display:flex;}
+.del-modal{background:var(--paper);border-radius:22px 22px 0 0;padding:20px 18px 36px;width:100%;max-width:480px;animation:up 0.26s ease;}
+.del-modal-handle{width:36px;height:4px;background:var(--line);border-radius:2px;margin:0 auto 16px;}
+.del-modal-title{font-family:var(--serif);font-size:18px;color:var(--crimson);margin-bottom:6px;}
+.del-modal-sub{font-size:12px;color:var(--ink2);margin-bottom:16px;}
+.del-opt{width:100%;background:var(--paper2);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;font-family:var(--font);font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;margin-bottom:8px;text-align:left;display:flex;justify-content:space-between;align-items:center;transition:all 0.15s;}
+.del-opt:hover{border-color:var(--crimson);background:#fde8e8;color:var(--crimson);}
+.del-opt-desc{font-size:11px;font-weight:400;color:var(--ink2);}
+.del-opt.danger{background:#fde8e8;border-color:var(--crimson);color:var(--crimson);}
+.del-opt.danger:hover{background:#f8c8c8;}
+.del-opt-count{font-size:11px;font-weight:700;background:var(--line);padding:2px 8px;border-radius:8px;color:var(--ink2);}
+.del-cancel{width:100%;background:var(--paper2);border:1px solid var(--line);border-radius:12px;padding:12px;font-family:var(--font);font-size:14px;font-weight:600;color:var(--ink2);cursor:pointer;margin-top:4px;}
+
+/* Delete by day sheet */
+.del-day-item{background:var(--paper2);border-radius:10px;padding:9px 12px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;}
+.del-day-l{flex:1;font-weight:600;font-size:13px;}
+.del-day-meta{font-size:11px;color:var(--ink3);margin-top:2px;}
+.del-day-count{font-size:12px;color:var(--ink2);font-weight:600;}
+
 .api-p{background:var(--gold-light);border:1.5px solid var(--gold2);border-radius:var(--r);padding:14px;margin-bottom:12px;display:none;gap:10px;align-items:flex-start;}
 .api-p.on{display:flex;}
 .api-p-text{font-size:13px;color:var(--gold);font-weight:500;line-height:1.5;}
@@ -756,7 +777,7 @@ margin-top:10px;background:var(--paper2);border-radius:12px;padding:10px 13px;bo
     <button class="btn-msv" style="width:100%;margin-bottom:10px;" onclick="startChangePin()">🔐 Zmień PIN</button>
     <div class="sep"></div>
     <div style="font-size:10px;color:var(--ink2);text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:10px;">Dane</div>
-    <button class="btn-danger" onclick="resetData()">🗑️ Usuń wszystkie dane</button>
+    <button class="btn-danger" onclick="openDelModal()">🗑️ Usuń dane...</button>
     <button class="btn-mclose" onclick="closeSett()">Zamknij</button>
   </div>
 </div>
@@ -951,12 +972,28 @@ let mpickYear=Math.max(MIN_YEAR,new Date().getFullYear());
 
 function buildMonthBar(){
   const now=new Date();
-  // Zbierz miesiące z danych
+  // Zbierz miesiące z danych — używamy miesiąc z daty wpisu
+  // Ale wyświetlamy miesiąc OKRESU do którego wpis należy (na podstawie periodDay)
   const months=new Set();
-  receipts.forEach(r=>r.data&&months.add(r.data.slice(0,7)));
-  incomes.forEach(i=>i.date&&months.add(i.date.slice(0,7)));
-  media.forEach(m=>m.date&&months.add(m.date.slice(0,7)));
-  events.forEach(e=>e.data&&months.add(e.data.slice(0,7)));
+  // Prosta heurystyka: zbierz wszystkie miesiące dat wpisów
+  // Picker pokazuje miesiące które mają jakiekolwiek dane
+  const day=periodDay||1;
+  function getDisplayMonth(dateStr){
+    if(!dateStr)return null;
+    const [y,m,d]=dateStr.split('-').map(Number);
+    // Jeśli dzień wpisu < periodDay → należy do poprzedniego okresu (miesiąc-1)
+    if(d<day){
+      const dt=new Date(y,m-2,1); // miesiąc poprzedni
+      return dt.toISOString().slice(0,7);
+    }
+    return `${String(y).padStart(4,'0')}-${String(m).padStart(2,'0')}`;
+  }
+  receipts.forEach(r=>r.data&&months.add(getDisplayMonth(r.data)));
+  incomes.forEach(i=>i.date&&months.add(getDisplayMonth(i.date)));
+  media.forEach(m=>m.date&&months.add(getDisplayMonth(m.date)));
+  events.forEach(e=>e.data&&months.add(getDisplayMonth(e.data)));
+  firma.forEach(f=>f.date&&months.add(getDisplayMonth(f.date)));
+  months.delete(null);
   // Zawsze dodaj bieżący miesiąc
   months.add(now.toISOString().slice(0,7));
   if(!curMonth)curMonth=now.toISOString().slice(0,7);
@@ -1073,6 +1110,164 @@ function resetData(){
   receipts=[];incomes=[];media=[];events=[];firma=[];
   buildMonthBar();renderAll();closeSett();
   toast('Dane usunięte','ok');
+}
+
+// ── GRANULAR DELETE MODAL ──
+function openDelModal(){
+  closeSett();
+  const period=getPeriodForMonth(curMonth);
+  document.getElementById('del-modal-sub').textContent=`Aktywny okres: ${period.label}`;
+  document.getElementById('del-period-lbl').textContent=`(${period.label})`;
+  // Policz wpisy w bieżącym okresie
+  const cnt=receipts.filter(r=>inPeriod(r.data,period)).length
+    +incomes.filter(i=>inPeriod(i.date,period)).length
+    +media.filter(x=>inPeriod(x.date,period)).length
+    +events.filter(x=>inPeriod(x.data,period)).length
+    +firma.filter(f=>inPeriod(f.date,period)).length;
+  document.getElementById('del-period-count').textContent=cnt+' wpisów';
+  document.getElementById('del-modal-ovl').classList.add('on');
+}
+
+function closeDelModal(){
+  document.getElementById('del-modal-ovl').classList.remove('on');
+}
+
+function delModalAction(type){
+  closeDelModal();
+  if(type==='all'){
+    resetData();
+  } else if(type==='period'){
+    delCurrentPeriod();
+  } else if(type==='day'){
+    openDelByDaySheet();
+  } else if(type==='entry'){
+    openDelEntrySheet();
+  }
+}
+
+function delCurrentPeriod(){
+  const period=getPeriodForMonth(curMonth);
+  const cntR=receipts.filter(r=>inPeriod(r.data,period)).length;
+  const cntI=incomes.filter(i=>inPeriod(i.date,period)).length;
+  const cntM=media.filter(x=>inPeriod(x.date,period)).length;
+  const cntE=events.filter(x=>inPeriod(x.data,period)).length;
+  const cntF=firma.filter(f=>inPeriod(f.date,period)).length;
+  const total=cntR+cntI+cntM+cntE+cntF;
+  if(!total){toast('Brak danych w tym okresie','ok');return;}
+  if(!confirm(`Usunąć ${total} wpisów z okresu ${period.label}?\nTa operacja jest nieodwracalna.`))return;
+  receipts=receipts.filter(r=>!inPeriod(r.data,period));
+  incomes=incomes.filter(i=>!inPeriod(i.date,period));
+  media=media.filter(x=>!inPeriod(x.date,period));
+  events=events.filter(x=>!inPeriod(x.data,period));
+  firma=firma.filter(f=>!inPeriod(f.date,period));
+  DB.set('receipts',receipts);DB.set('incomes',incomes);DB.set('media',media);DB.set('events',events);DB.set('firma',firma);
+  buildMonthBar();renderAll();
+  toast(`Usunięto ${total} wpisów z okresu ✓`,'ok');
+}
+
+function openDelByDaySheet(){
+  const period=getPeriodForMonth(curMonth);
+  // Zbierz wszystkie unikalne dni z danych w bieżącym okresie
+  const dayMap={};
+  function addDay(dateStr,type,label){
+    if(!dateStr||!inPeriod(dateStr,period))return;
+    const d=dateStr.slice(0,10);
+    if(!dayMap[d])dayMap[d]={date:d,counts:{}};
+    dayMap[d].counts[type]=(dayMap[d].counts[type]||0)+1;
+  }
+  receipts.forEach(r=>addDay(r.data,'Paragony',r.sklep));
+  incomes.forEach(i=>addDay(i.date,'Zarobki',i.source));
+  media.forEach(x=>addDay(x.date,'Rachunki',x.type));
+  events.forEach(x=>addDay(x.data,'Wyjścia',x.desc));
+  firma.forEach(f=>addDay(f.date,'Firma',f.type));
+
+  const days=Object.values(dayMap).sort((a,b)=>b.date.localeCompare(a.date));
+  if(!days.length){toast('Brak danych w tym okresie','ok');return;}
+
+  const pan=document.getElementById('del-day-pan');
+  pan.innerHTML=`<div class="sh-handle"></div>
+    <div class="sh-title">🗓️ Usuń wybrany dzień</div>
+    <div class="sh-meta" style="margin-bottom:14px;">${period.label}</div>
+    ${days.map(d=>{
+      const cats=Object.entries(d.counts).map(([k,v])=>`${k}: ${v}`).join(' · ');
+      const total=Object.values(d.counts).reduce((s,v)=>s+v,0);
+      return`<div class="del-day-item">
+        <div class="del-day-l">
+          <div>${d.date}</div>
+          <div class="del-day-meta">${cats}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="del-day-count">${total} wpisów</span>
+          <button onclick="delDay('${d.date}')" style="background:#fde8e8;border:1.5px solid var(--crimson);border-radius:9px;padding:6px 12px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--crimson);cursor:pointer;">Usuń</button>
+        </div>
+      </div>`;
+    }).join('')}
+    <button class="btn-sh-close" style="margin-top:10px;" onclick="closeSheet('del-day-sheet')">Zamknij</button>`;
+  document.getElementById('del-day-sheet').classList.add('on');
+}
+
+function delDay(dateStr){
+  const cntR=receipts.filter(r=>r.data===dateStr).length;
+  const cntI=incomes.filter(i=>i.date===dateStr).length;
+  const cntM=media.filter(x=>x.date===dateStr).length;
+  const cntE=events.filter(x=>x.data===dateStr).length;
+  const cntF=firma.filter(f=>f.date===dateStr).length;
+  const total=cntR+cntI+cntM+cntE+cntF;
+  if(!confirm(`Usunąć ${total} wpisów z dnia ${dateStr}?`))return;
+  receipts=receipts.filter(r=>r.data!==dateStr);
+  incomes=incomes.filter(i=>i.date!==dateStr);
+  media=media.filter(x=>x.date!==dateStr);
+  events=events.filter(x=>x.data!==dateStr);
+  firma=firma.filter(f=>f.date!==dateStr);
+  DB.set('receipts',receipts);DB.set('incomes',incomes);DB.set('media',media);DB.set('events',events);DB.set('firma',firma);
+  closeSheet('del-day-sheet');buildMonthBar();renderAll();
+  toast(`Usunięto dane z ${dateStr} ✓`,'ok');
+}
+
+function openDelEntrySheet(){
+  const period=getPeriodForMonth(curMonth);
+  const allItems=[];
+  receipts.filter(r=>inPeriod(r.data,period)).forEach(r=>allItems.push({id:r.id,icon:'🧾',label:r.sklep,meta:r.data+(r.godzina?' · '+r.godzina:''),amt:r.suma,type:'receipt',dateKey:r.data}));
+  incomes.filter(i=>inPeriod(i.date,period)).forEach(i=>allItems.push({id:i.id,icon:'💰',label:i.source,meta:i.date,amt:i.amount,type:'income',dateKey:i.date}));
+  media.filter(x=>inPeriod(x.date,period)).forEach(x=>allItems.push({id:x.id,icon:'🏠',label:x.type,meta:x.date,amt:x.amount,type:'media',dateKey:x.date}));
+  events.filter(x=>inPeriod(x.data,period)).forEach(x=>allItems.push({id:x.id,icon:'🎉',label:x.desc,meta:x.data,amt:x.amount,type:'event',dateKey:x.data}));
+  firma.filter(f=>inPeriod(f.date,period)).forEach(f=>allItems.push({id:f.id,icon:'🏢',label:f.type+(f.desc?' — '+f.desc:''),meta:f.date,amt:f.amount,type:'firma',dateKey:f.date}));
+  allItems.sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
+
+  if(!allItems.length){toast('Brak danych w tym okresie','ok');return;}
+
+  const pan=document.getElementById('del-entry-pan');
+  pan.innerHTML=`<div class="sh-handle"></div>
+    <div class="sh-title">🗑️ Usuń jeden wpis</div>
+    <div class="sh-meta" style="margin-bottom:14px;">${period.label} · ${allItems.length} wpisów</div>
+    <div style="max-height:65vh;overflow-y:auto;">
+    ${allItems.map(it=>`
+      <div class="del-day-item">
+        <div class="del-day-l">
+          <div>${it.icon} ${it.label}</div>
+          <div class="del-day-meta">${it.meta}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-family:var(--serif);font-size:13px;color:var(--gold);white-space:nowrap;">${fmt(it.amt)}</span>
+          <button onclick="delEntry('${it.type}',${it.id})" style="background:#fde8e8;border:1.5px solid var(--crimson);border-radius:9px;padding:6px 10px;font-family:var(--font);font-size:12px;font-weight:600;color:var(--crimson);cursor:pointer;">🗑️</button>
+        </div>
+      </div>`).join('')}
+    </div>
+    <button class="btn-sh-close" style="margin-top:10px;" onclick="closeSheet('del-entry-sheet')">Zamknij</button>`;
+  document.getElementById('del-entry-sheet').classList.add('on');
+}
+
+function delEntry(type,id){
+  if(!confirm('Usunąć ten wpis?'))return;
+  if(type==='receipt'){receipts=receipts.filter(r=>r.id!==id);DB.set('receipts',receipts);}
+  else if(type==='income'){incomes=incomes.filter(i=>i.id!==id);DB.set('incomes',incomes);}
+  else if(type==='media'){media=media.filter(x=>x.id!==id);DB.set('media',media);}
+  else if(type==='event'){events=events.filter(x=>x.id!==id);DB.set('events',events);}
+  else if(type==='firma'){firma=firma.filter(f=>f.id!==id);DB.set('firma',firma);}
+  buildMonthBar();renderAll();
+  // Odśwież sheet (zamknij — bo lista się zmieniła)
+  closeSheet('del-entry-sheet');
+  toast('Wpis usunięty ✓','ok');
 }
 
 // Scan
@@ -1540,7 +1735,8 @@ function delFirma(id,e){
 function renderFirma(){
   const m=curMonth;
   const el=document.getElementById('firma-list');
-  const items=firma.filter(f=>f.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date));
+  const period=getPeriodForMonth(m);
+  const items=firma.filter(f=>inPeriod(f.date,period)).sort((a,b)=>b.date.localeCompare(a.date));
   if(!items.length){el.innerHTML='<div class="empty"><span class="empty-ico">🏢</span>Brak wydatków firmowych w tym miesiącu.</div>';return;}
   const total=items.reduce((s,f)=>s+f.amount,0);
   const zus=items.filter(f=>f.type==='ZUS').reduce((s,f)=>s+f.amount,0);
@@ -1565,13 +1761,14 @@ function renderFirma(){
 function renderSklepy(){
   const m=curMonth;
   const el=document.getElementById('sklepy-list');
-  const recs=receipts.filter(r=>r.data.startsWith(m));
+  const period=getPeriodForMonth(m);
+  const recs=receipts.filter(r=>inPeriod(r.data,period));
   if(!recs.length){
     document.getElementById('sklepy-period').textContent='';
-    el.innerHTML='<div class="empty"><span class="empty-ico">🛒</span>Brak paragonów w tym miesiącu.</div>';
+    el.innerHTML='<div class="empty"><span class="empty-ico">🛒</span>Brak paragonów w tym okresie.</div>';
     return;
   }
-  document.getElementById('sklepy-period').textContent=`📅 ${fmtMonth(m)} · ${recs.length} paragon${recs.length===1?'':'ów'}`;
+  document.getElementById('sklepy-period').textContent=`📅 ${period.label} · ${recs.length} paragon${recs.length===1?'':'ów'}`;
 
   // Grupuj po sklepie (case-insensitive)
   const map={};
@@ -1618,7 +1815,8 @@ function renderSklepy(){
 
 function openSklepDrill(name){
   const m=curMonth;
-  const wizyty=receipts.filter(r=>r.data.startsWith(m)&&(r.sklep||'').trim().toLowerCase()===name.toLowerCase())
+  const period=getPeriodForMonth(m);
+  const wizyty=receipts.filter(r=>inPeriod(r.data,period)&&(r.sklep||'').trim().toLowerCase()===name.toLowerCase())
     .sort((a,b)=>b.data.localeCompare(a.data));
   const total=wizyty.reduce((s,r)=>s+r.suma,0);
   const avgWizyta=wizyty.length?total/wizyty.length:0;
@@ -1712,16 +1910,16 @@ function calcEur(){
 // Summary
 function updateSummary(){
   const m=curMonth;
-  const expR=receipts.filter(r=>r.data.startsWith(m)).reduce((s,r)=>s+r.suma,0);
-  const expM=media.filter(x=>x.date.startsWith(m)).reduce((s,x)=>s+x.amount,0);
-  const expE=events.filter(x=>x.data.startsWith(m)).reduce((s,x)=>s+x.amount,0);
-  const firmaM=firma.filter(f=>f.date.startsWith(m));
-  const expF=firmaM.reduce((s,f)=>s+f.amount,0);
-  const expZUS=firmaM.filter(f=>f.type==='ZUS').reduce((s,f)=>s+f.amount,0);
-  const expPod=firmaM.filter(f=>f.type==='Podatek dochodowy').reduce((s,f)=>s+f.amount,0);
-  const expFInne=firmaM.filter(f=>f.type==='Inne firmowe').reduce((s,f)=>s+f.amount,0);
-  const expense=expR+expM+expE+expF;
   const period=getPeriodForMonth(m);
+  const expR=receipts.filter(r=>inPeriod(r.data,period)).reduce((s,r)=>s+r.suma,0);
+  const expM=media.filter(x=>inPeriod(x.date,period)).reduce((s,x)=>s+x.amount,0);
+  const expE=events.filter(x=>inPeriod(x.data,period)).reduce((s,x)=>s+x.amount,0);
+  const firmaP=firma.filter(f=>inPeriod(f.date,period));
+  const expF=firmaP.reduce((s,f)=>s+f.amount,0);
+  const expZUS=firmaP.filter(f=>f.type==='ZUS').reduce((s,f)=>s+f.amount,0);
+  const expPod=firmaP.filter(f=>f.type==='Podatek dochodowy').reduce((s,f)=>s+f.amount,0);
+  const expFInne=firmaP.filter(f=>f.type==='Inne firmowe').reduce((s,f)=>s+f.amount,0);
+  const expense=expR+expM+expE+expF;
   const income=incomes.filter(i=>inPeriod(i.date,period)).reduce((s,i)=>s+i.amount,0);
   const balance=income-expense;
   document.getElementById('h-exp').textContent=fmt(expense);
@@ -1731,12 +1929,11 @@ function updateSummary(){
   document.getElementById('h-zus').textContent=fmt(expZUS);
   document.getElementById('h-pod').textContent=fmt(expPod);
   document.getElementById('h-firm-inne').textContent=fmt(expFInne);
-  // Ukryj wiersz firm chipów jeśli wszystko 0
   document.querySelectorAll('.hchip-firm').forEach(el=>el.closest('.hchips').style.opacity=expF>0?'1':'0.4');
   [0,1].forEach(pi=>{
-    const pe=receipts.filter(r=>r.data.startsWith(m)&&(r.person??0)===pi).reduce((s,r)=>s+r.suma,0)
-      +media.filter(x=>x.date.startsWith(m)&&(x.person??0)===pi).reduce((s,x)=>s+x.amount,0)
-      +events.filter(x=>x.data.startsWith(m)&&(x.person??0)===pi).reduce((s,x)=>s+x.amount,0);
+    const pe=receipts.filter(r=>inPeriod(r.data,period)&&(r.person??0)===pi).reduce((s,r)=>s+r.suma,0)
+      +media.filter(x=>inPeriod(x.date,period)&&(x.person??0)===pi).reduce((s,x)=>s+x.amount,0)
+      +events.filter(x=>inPeriod(x.data,period)&&(x.person??0)===pi).reduce((s,x)=>s+x.amount,0);
     document.getElementById('p'+pi+'-exp').textContent=fmt(pe);
   });
 }
@@ -1745,7 +1942,8 @@ function pTag(p){const pi=p??0;const pn=pi===2?'Wspólne':names[pi]||names[0];co
 
 function renderReceipts(){
   const m=curMonth;const el=document.getElementById('rec-list');
-  const recs=receipts.filter(r=>r.data.startsWith(m)).sort((a,b)=>b.data.localeCompare(a.data));
+  const period=getPeriodForMonth(m);
+  const recs=receipts.filter(r=>inPeriod(r.data,period)).sort((a,b)=>b.data.localeCompare(a.data));
   if(!recs.length){el.innerHTML='<div class="empty"><span class="empty-ico">🧾</span>Brak paragonów w tym miesiącu.</div>';return;}
   el.innerHTML=recs.map(r=>{
     const {pn,pc}=pTag(r.person);
@@ -1764,7 +1962,8 @@ function renderReceipts(){
 
 function renderMedia(){
   const m=curMonth;const el=document.getElementById('med-list');
-  const items=media.filter(x=>x.date.startsWith(m)).sort((a,b)=>b.date.localeCompare(a.date));
+  const period=getPeriodForMonth(m);
+  const items=media.filter(x=>inPeriod(x.date,period)).sort((a,b)=>b.date.localeCompare(a.date));
   if(!items.length){el.innerHTML='<div class="empty"><span class="empty-ico">🏠</span>Brak rachunków w tym miesiącu.</div>';return;}
   el.innerHTML=items.map(x=>{
     const {pn,pc}=pTag(x.person);
@@ -1778,7 +1977,8 @@ function renderMedia(){
 
 function renderEvents(){
   const m=curMonth;const el=document.getElementById('evt-list');
-  const items=events.filter(x=>x.data.startsWith(m)).sort((a,b)=>b.data.localeCompare(a.data));
+  const period=getPeriodForMonth(m);
+  const items=events.filter(x=>inPeriod(x.data,period)).sort((a,b)=>b.data.localeCompare(a.data));
   if(!items.length){el.innerHTML='<div class="empty"><span class="empty-ico">🎉</span>Brak wyjść w tym miesiącu.</div>';return;}
   el.innerHTML=items.map(x=>{
     const {pn,pc}=pTag(x.person);
@@ -1793,12 +1993,13 @@ function renderEvents(){
 function renderCats(){
   const m=curMonth;
   document.getElementById('cats-month-lbl').textContent=fmtMonth(m);
+  const period=getPeriodForMonth(m);
   const map={};
-  receipts.filter(r=>r.data.startsWith(m)).forEach(r=>(r.produkty||[]).forEach(p=>{
+  receipts.filter(r=>inPeriod(r.data,period)).forEach(r=>(r.produkty||[]).forEach(p=>{
     const c=p.kategoria||'Inne';map[c]=(map[c]||0)+parseFloat(p.suma||p.cena_jednostkowa||0);
   }));
-  media.filter(x=>x.date.startsWith(m)).forEach(x=>{map[x.type]=(map[x.type]||0)+x.amount;});
-  events.filter(x=>x.data.startsWith(m)).forEach(x=>{map[EVT_CAT]=(map[EVT_CAT]||0)+x.amount;});
+  media.filter(x=>inPeriod(x.date,period)).forEach(x=>{map[x.type]=(map[x.type]||0)+x.amount;});
+  events.filter(x=>inPeriod(x.data,period)).forEach(x=>{map[EVT_CAT]=(map[EVT_CAT]||0)+x.amount;});
   const sorted=Object.entries(map).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   const total=sorted.reduce((s,[,v])=>s+v,0);
   const maxVal=sorted.length?sorted[0][1]:1;
@@ -1830,22 +2031,22 @@ function renderIncome(){
   const grouped={};
   periodIncomes.forEach(i=>{const gm=i.date.slice(0,7);if(!grouped[gm])grouped[gm]=[];grouped[gm].push(i);});
 
-  // Podsumowanie po kategoriach (wydatki w tym miesiącu)
+  // Podsumowanie po kategoriach (wydatki w tym okresie)
   const expMap={};
-  receipts.filter(r=>r.data.startsWith(m)).forEach(r=>(r.produkty||[]).forEach(p=>{
+  receipts.filter(r=>inPeriod(r.data,period)).forEach(r=>(r.produkty||[]).forEach(p=>{
     const c=p.kategoria||'Inne';expMap[c]=(expMap[c]||0)+parseFloat(p.suma||p.cena_jednostkowa||0);
   }));
-  media.filter(x=>x.date.startsWith(m)).forEach(x=>{expMap[x.type]=(expMap[x.type]||0)+x.amount;});
-  events.filter(x=>x.data.startsWith(m)).forEach(x=>{expMap['Wyjście/Impreza']=(expMap['Wyjście/Impreza']||0)+x.amount;});
+  media.filter(x=>inPeriod(x.date,period)).forEach(x=>{expMap[x.type]=(expMap[x.type]||0)+x.amount;});
+  events.filter(x=>inPeriod(x.data,period)).forEach(x=>{expMap['Wyjście/Impreza']=(expMap['Wyjście/Impreza']||0)+x.amount;});
   // Firmowe osobno w podsumowaniu
-  const firmaM=firma.filter(f=>f.date.startsWith(m));
-  const expZUS=firmaM.filter(f=>f.type==='ZUS').reduce((s,f)=>s+f.amount,0);
-  const expPod=firmaM.filter(f=>f.type==='Podatek dochodowy').reduce((s,f)=>s+f.amount,0);
-  const expFInne=firmaM.filter(f=>f.type==='Inne firmowe').reduce((s,f)=>s+f.amount,0);
+  const firmaP=firma.filter(f=>inPeriod(f.date,period));
+  const expZUS=firmaP.filter(f=>f.type==='ZUS').reduce((s,f)=>s+f.amount,0);
+  const expPod=firmaP.filter(f=>f.type==='Podatek dochodowy').reduce((s,f)=>s+f.amount,0);
+  const expFInne=firmaP.filter(f=>f.type==='Inne firmowe').reduce((s,f)=>s+f.amount,0);
   const expF=expZUS+expPod+expFInne;
   if(expZUS>0)expMap['ZUS 🏢']=expZUS;
-  if(expPod>0)expMap['Podatek dochodowy 🏢']=expPod;
-  if(expFInne>0)expMap['Inne firmowe 🏢']=expFInne;
+  if(expPod>0)expMap['Podatek\u00a0dochodowy 🏢']=expPod;
+  if(expFInne>0)expMap['Inne\u00a0firmowe 🏢']=expFInne;
   const totalExp=Object.values(expMap).reduce((s,v)=>s+v,0);
   const totalInc=periodIncomes.reduce((s,i)=>s+i.amount,0);
   const sortedExp=Object.entries(expMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
@@ -1948,10 +2149,11 @@ function saveDet(rid){
 
 function openCatDrill(catName){
   const m=curMonth;
+  const period=getPeriodForMonth(m);
   const col=COL[catName]||COL['Inne'];
-  // Zbierz wszystkie produkty z tej kategorii w tym miesiącu
+  // Zbierz wszystkie produkty z tej kategorii w tym okresie
   const items=[];
-  receipts.filter(r=>r.data.startsWith(m)).forEach(r=>{
+  receipts.filter(r=>inPeriod(r.data,period)).forEach(r=>{
     (r.produkty||[]).filter(p=>(p.kategoria||'Inne')===catName).forEach(p=>{
       items.push({nazwa:p.nazwa,cena:parseFloat(p.suma||p.cena_jednostkowa||0),sklep:r.sklep,data:r.data,ilosc:p.ilosc,jednostka:p.jednostka||'szt'});
     });
@@ -2119,5 +2321,41 @@ if('serviceWorker' in navigator){
   });
 }
 </script>
+<!-- DELETE MODAL -->
+<div class="del-modal-overlay" id="del-modal-ovl" onclick="if(event.target===this)closeDelModal()">
+  <div class="del-modal">
+    <div class="del-modal-handle"></div>
+    <div class="del-modal-title">🗑️ Usuń dane</div>
+    <div class="del-modal-sub" id="del-modal-sub">Wybierz zakres usuwania</div>
+    <button class="del-opt" onclick="delModalAction('entry')">
+      <div><div>Usuń jeden wpis</div><div class="del-opt-desc">Wybierz konkretny paragon, zarobek lub rachunek</div></div>
+      <span>›</span>
+    </button>
+    <button class="del-opt" onclick="delModalAction('day')">
+      <div><div>Usuń wybrany dzień</div><div class="del-opt-desc">Wszystkie dane z jednego dnia</div></div>
+      <span>›</span>
+    </button>
+    <button class="del-opt" onclick="delModalAction('period')">
+      <div><div>Usuń bieżący okres <span id="del-period-lbl" style="color:var(--gold);font-size:12px;"></span></div><div class="del-opt-desc">Wszystkie dane z aktywnego okresu rozliczeniowego</div></div>
+      <span id="del-period-count" class="del-opt-count"></span>
+    </button>
+    <button class="del-opt danger" onclick="delModalAction('all')">
+      <div><div>Usuń WSZYSTKIE dane</div><div class="del-opt-desc">Kasuje całą historię — nieodwracalne</div></div>
+      <span>⚠️</span>
+    </button>
+    <button class="del-cancel" onclick="closeDelModal()">Anuluj</button>
+  </div>
+</div>
+
+<!-- DELETE BY DAY SHEET -->
+<div class="sheet" id="del-day-sheet" onclick="closeSheetOut(event,'del-day-sheet')">
+  <div class="sheet-pan" id="del-day-pan"></div>
+</div>
+
+<!-- DELETE ENTRY SHEET -->
+<div class="sheet" id="del-entry-sheet" onclick="closeSheetOut(event,'del-entry-sheet')">
+  <div class="sheet-pan" id="del-entry-pan"></div>
+</div>
+
 </body>
 </html>
